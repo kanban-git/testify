@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
 import { useQuizSession } from '@/hooks/useQuizSession';
 import { useMetrics } from '@/hooks/useMetrics';
@@ -17,9 +17,12 @@ interface Answer {
 
 export default function QuizPlay() {
   const { slug } = useParams<{ slug: string }>();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { createSession, saveResponse } = useQuizSession();
   const { trackEvent } = useMetrics();
+
+  const isTestMode = searchParams.get('test') === '1';
 
   const [quizId, setQuizId] = useState<string>('');
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -52,6 +55,12 @@ export default function QuizPlay() {
       setAnswers(grouped);
 
       const sid = await createSession(qId);
+
+      // Mark as test if test mode
+      if (isTestMode) {
+        await (supabase.from('quiz_sessions').update as any)({ is_test: true }).eq('id', sid);
+      }
+
       setSessionId(sid);
       trackEvent('quiz_started', qId, sid);
       setLoading(false);
@@ -72,7 +81,7 @@ export default function QuizPlay() {
 
     setTimeout(() => {
       if (currentIndex + 1 >= questions.length) {
-        navigate(`/quiz/${slug}/processing`, { state: { sessionId, quizId } });
+        navigate(`/quiz/${slug}/processing`, { state: { sessionId, quizId, isTestMode } });
       } else {
         setCurrentIndex(prev => prev + 1);
         setSelectedAnswer(null);
@@ -85,6 +94,11 @@ export default function QuizPlay() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      {isTestMode && (
+        <div className="bg-amber-500/10 text-amber-700 text-center text-xs py-1 font-medium">
+          ⚠️ Modo teste ativo
+        </div>
+      )}
       {/* Progress bar */}
       <div className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b border-border">
         <div className="container py-3">

@@ -174,6 +174,8 @@ export type Database = {
           completed_at: string | null
           email: string | null
           id: string
+          is_test: boolean | null
+          name: string | null
           payment_provider: string | null
           payment_status: string | null
           quiz_id: string
@@ -186,6 +188,8 @@ export type Database = {
           completed_at?: string | null
           email?: string | null
           id?: string
+          is_test?: boolean | null
+          name?: string | null
           payment_provider?: string | null
           payment_status?: string | null
           quiz_id: string
@@ -198,6 +202,8 @@ export type Database = {
           completed_at?: string | null
           email?: string | null
           id?: string
+          is_test?: boolean | null
+          name?: string | null
           payment_provider?: string | null
           payment_status?: string | null
           quiz_id?: string

@@ -3,7 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 type EventType = 
   | 'page_view' | 'quiz_started' | 'question_answered' | 'quiz_completed'
   | 'paywall_viewed' | 'payment_initiated' | 'payment_approved'
-  | 'report_unlocked' | 'email_submitted';
+  | 'report_unlocked' | 'email_submitted' | 'user_info_submitted';
 
 export function useMetrics() {
   const trackEvent = async (
