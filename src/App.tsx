@@ -9,6 +9,7 @@ import QuizLanding from "./pages/QuizLanding";
 import QuizPlay from "./pages/QuizPlay";
 import QuizProcessing from "./pages/QuizProcessing";
 import QuizResult from "./pages/QuizResult";
+import PaymentCallback from "./pages/PaymentCallback";
 import AdminLogin from "./pages/AdminLogin";
 import AdminDashboard from "./pages/AdminDashboard";
 
@@ -26,6 +27,7 @@ const App = () => (
           <Route path="/quiz/:slug/play" element={<QuizPlay />} />
           <Route path="/quiz/:slug/processing" element={<QuizProcessing />} />
           <Route path="/quiz/:slug/result" element={<QuizResult />} />
+          <Route path="/quiz/payment-callback" element={<PaymentCallback />} />
           <Route path="/admin/login" element={<AdminLogin />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="*" element={<NotFound />} />
