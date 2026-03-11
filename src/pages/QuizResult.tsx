@@ -19,6 +19,15 @@ interface Result {
   result_title: string; result_summary: string; full_report: any; unlocked: boolean;
 }
 
+function getIQClassification(iq: number): string {
+  if (iq >= 140) return 'Gênio ou quase gênio';
+  if (iq >= 130) return 'Superdotado';
+  if (iq >= 120) return 'Inteligência superior';
+  if (iq >= 110) return 'Inteligência acima da média';
+  if (iq >= 90) return 'Inteligência normal';
+  return 'Inteligência abaixo da média';
+}
+
 export default function QuizResult() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
