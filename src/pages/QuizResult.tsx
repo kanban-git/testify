@@ -136,7 +136,7 @@ export default function QuizResult() {
                 className="space-y-2"
               >
                 <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Seu QI estimado</p>
-                <div className="text-7xl md:text-8xl font-display font-black text-gradient">{iqScore}</div>
+                <div className="text-6xl md:text-8xl font-display font-black text-gradient">{iqScore}</div>
                 <p className="text-lg font-semibold text-muted-foreground">{getIQClassification(iqScore)}</p>
               </motion.div>
             ) : null}
