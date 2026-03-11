@@ -437,5 +437,5 @@ export function calculateScore(
 }
 
 function generateGenericResult(slug: string, responses: { score_value: number }[], total: number, max: number): ScoreResult {
-  return calculateScore('perfil-de-raciocinio', responses, max);
+  return calculateScore('teste-de-qi', responses, max);
 }
