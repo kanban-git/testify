@@ -5,6 +5,7 @@ export interface ScoreResult {
   resultTitle: string;
   resultSummary: string;
   fullReport: FullReport;
+  iqScore?: number;
 }
 
 export interface FullReport {
