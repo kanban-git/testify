@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle, Mail, Star, Users, ArrowRight, Shield, CreditCard, Brain, Eye } from 'lucide-react';
+import { Lock, CheckCircle, Mail, Star, Users, ArrowRight, Shield, CreditCard, Brain, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Result {
@@ -54,7 +54,7 @@ export default function QuizResult() {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const res = await fetch(`https://${projectId}.supabase.co/functions/v1/mercadopago-checkout`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
         },
@@ -97,29 +97,34 @@ export default function QuizResult() {
   const isTDAH = slug === 'indicadores-de-tdah';
   const report = result.full_report as { sections: any[]; disclaimer: string } | null;
 
-  // Extract some blurred preview sections for paywall
-  const previewSections = report?.sections?.filter(s => 
+  const previewSections = report?.sections?.filter(s =>
     s.title !== 'Perfil Predominante' && s.type !== 'traits'
   ).slice(0, 3) || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 py-8 md:py-16">
+      <main className="flex-1 py-10 md:py-20">
         <div className="container max-w-2xl mx-auto space-y-8">
-          {/* Preliminary Result - always visible */}
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4">
-            <p className="text-sm font-medium text-primary uppercase tracking-wider">Sua análise está pronta</p>
-            
-            <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Brain className="h-8 w-8 text-primary" />
+          {/* Preliminary Result */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-6">
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
+              className="h-20 w-20 mx-auto rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl shadow-primary/25"
+            >
+              <Brain className="h-10 w-10 text-primary-foreground" />
+            </motion.div>
+
+            <div className="space-y-3">
+              <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Sua análise está pronta</p>
+              <p className="text-base text-muted-foreground">Perfil predominante:</p>
+              <h1 className="text-3xl md:text-5xl font-display font-extrabold">{result.result_title}</h1>
+              <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">{result.result_summary}</p>
             </div>
 
-            <p className="text-base text-muted-foreground">Perfil predominante:</p>
-            <h1 className="text-3xl md:text-4xl font-display font-bold">{result.result_title}</h1>
-            <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">{result.result_summary}</p>
-            
-            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-5 py-2 font-semibold text-sm">
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-6 py-2.5 font-semibold text-sm border border-primary/20">
               <Users className="h-4 w-4" />
               Seu perfil se destaca entre {result.percentile}% dos participantes
             </div>
@@ -127,10 +132,10 @@ export default function QuizResult() {
 
           {showPaywall ? (
             <>
-              {/* Blurred report preview */}
+              {/* Blurred preview */}
               {previewSections.map((section: any, i: number) => (
                 <div key={i} className="blur-content select-none">
-                  <Card>
+                  <Card className="rounded-2xl">
                     <CardHeader><CardTitle className="text-base">{section.title}</CardTitle></CardHeader>
                     <CardContent>
                       <p className="text-sm text-muted-foreground">{section.content?.substring(0, 200)}...</p>
@@ -141,61 +146,68 @@ export default function QuizResult() {
 
               {/* Paywall */}
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
-                <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-accent/5">
-                  <CardContent className="pt-6 space-y-6">
-                    <div className="text-center space-y-2">
-                      <Lock className="h-8 w-8 mx-auto text-primary" />
+                <Card className="rounded-2xl border-primary/20 overflow-hidden">
+                  <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
+                  <CardContent className="pt-8 pb-8 space-y-8">
+                    <div className="text-center space-y-3">
+                      <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+                        <Lock className="h-7 w-7 text-primary" />
+                      </div>
                       <h3 className="text-xl font-display font-bold">Desbloqueie seu relatório completo</h3>
-                      <p className="text-sm text-muted-foreground">Veja sua análise detalhada e personalizada</p>
+                      <p className="text-sm text-muted-foreground">Análise detalhada e personalizada do seu perfil</p>
                     </div>
 
-                    <ul className="space-y-3 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[
-                        'Mapa completo de traços cognitivos',
-                        'Estilo de pensamento e resolução de problemas',
-                        'Potenciais identificados e pontos fortes',
-                        'Como seu perfil aparece na vida real',
-                        'Áreas de desenvolvimento personalizado',
-                        'Comparação com outros participantes',
+                        'Mapa de traços cognitivos',
+                        'Estilo de pensamento',
+                        'Potenciais identificados',
+                        'Pontos fortes',
+                        'Áreas de desenvolvimento',
+                        'Comparação com participantes',
                         'Estilo de aprendizado',
                         'Interpretação final detalhada',
-                        'Envio do resultado por email',
                       ].map((item, i) => (
-                        <li key={i} className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-[hsl(var(--success))] shrink-0" />{item}</li>
+                        <div key={i} className="flex items-center gap-2 p-2.5 rounded-xl bg-muted/50 text-sm">
+                          <CheckCircle className="h-4 w-4 text-success shrink-0" />
+                          <span>{item}</span>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
 
                     {/* Email capture */}
                     {!emailSubmitted ? (
                       <form onSubmit={handleEmailSubmit} className="space-y-3">
                         <div className="flex gap-2">
-                          <Input type="email" placeholder="Seu melhor email" value={email} onChange={e => setEmail(e.target.value)} required className="flex-1" />
-                          <Button type="submit" variant="outline" size="sm"><Mail className="h-4 w-4" /></Button>
+                          <Input type="email" placeholder="Seu melhor email" value={email} onChange={e => setEmail(e.target.value)} required className="flex-1 rounded-xl" />
+                          <Button type="submit" variant="outline" size="icon" className="rounded-xl shrink-0"><Mail className="h-4 w-4" /></Button>
                         </div>
                       </form>
                     ) : (
-                      <p className="text-sm text-[hsl(var(--success))] flex items-center gap-1"><CheckCircle className="h-4 w-4" /> Email salvo com sucesso!</p>
+                      <p className="text-sm text-success flex items-center gap-1.5"><CheckCircle className="h-4 w-4" /> Email salvo com sucesso!</p>
                     )}
 
-                    <div className="text-center space-y-3">
-                      <div className="text-3xl font-display font-bold text-primary">R$ 7,90</div>
-                      <p className="text-xs text-muted-foreground">Pagamento único • Acesso imediato</p>
-                      <Button 
-                        size="lg" 
-                        className="w-full text-lg py-6" 
+                    <div className="text-center space-y-4">
+                      <div>
+                        <div className="text-4xl font-display font-extrabold text-gradient">R$ 7,90</div>
+                        <p className="text-xs text-muted-foreground mt-1">Pagamento único • Acesso imediato</p>
+                      </div>
+                      <Button
+                        size="lg"
+                        className="w-full text-lg py-7 rounded-2xl shadow-lg shadow-primary/20 font-display font-bold"
                         onClick={handlePayment}
                         disabled={paymentLoading}
                       >
                         {paymentLoading ? (
                           <div className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin mr-2" />
                         ) : (
-                          <Star className="mr-2 h-5 w-5" />
+                          <Sparkles className="mr-2 h-5 w-5" />
                         )}
-                        {paymentLoading ? 'Processando...' : 'Desbloquear meu relatório completo'}
+                        {paymentLoading ? 'Processando...' : 'Desbloquear meu relatório'}
                       </Button>
-                      <div className="flex items-center justify-center gap-3 text-xs text-muted-foreground">
-                        <span className="flex items-center gap-1"><CreditCard className="h-3 w-3" /> Pix • Cartão de crédito</span>
-                        <span className="flex items-center gap-1"><Shield className="h-3 w-3" /> Pagamento seguro</span>
+                      <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1"><CreditCard className="h-3.5 w-3.5" /> Pix • Cartão</span>
+                        <span className="flex items-center gap-1"><Shield className="h-3.5 w-3.5" /> Pagamento seguro</span>
                       </div>
                     </div>
                   </CardContent>
@@ -215,8 +227,8 @@ export default function QuizResult() {
           <DisclaimerBanner variant={isTDAH ? 'strong' : 'default'} />
 
           <div className="text-center">
-            <Button variant="outline" onClick={() => navigate('/')}>
-              <ArrowRight className="mr-1 h-4 w-4" /> Ver outros testes
+            <Button variant="outline" onClick={() => navigate('/')} className="rounded-xl">
+              <ArrowRight className="mr-1.5 h-4 w-4" /> Ver outros testes
             </Button>
           </div>
         </div>

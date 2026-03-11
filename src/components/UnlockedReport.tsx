@@ -1,6 +1,5 @@
 import { motion } from 'framer-motion';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import {
@@ -58,10 +57,17 @@ const SECTION_ICONS: Record<string, React.ReactNode> = {
   'Interpretação Final': <Sparkles className="h-5 w-5" />,
 };
 
-const TRAIT_COLORS = [
-  'bg-primary', 'bg-accent', 'bg-[hsl(var(--success))]', 'bg-[hsl(var(--warning))]',
-  'bg-[hsl(271,76%,53%)]', 'bg-[hsl(330,81%,60%)]', 'bg-primary/80', 'bg-accent/80',
-  'bg-[hsl(var(--success))]/80', 'bg-[hsl(var(--warning))]/80',
+const TRAIT_GRADIENTS = [
+  'from-primary to-primary-glow',
+  'from-accent to-accent',
+  'from-success to-success',
+  'from-warning to-warning',
+  'from-[hsl(271,76%,53%)] to-[hsl(290,76%,60%)]',
+  'from-[hsl(330,81%,60%)] to-[hsl(340,81%,65%)]',
+  'from-primary/80 to-primary',
+  'from-accent/80 to-accent',
+  'from-success/80 to-success',
+  'from-warning/80 to-warning',
 ];
 
 function getTraitLabel(level: number): string {
@@ -72,62 +78,77 @@ function getTraitLabel(level: number): string {
   return 'Em desenvolvimento';
 }
 
+function getTraitLabelColor(level: number): string {
+  if (level >= 85) return 'text-success';
+  if (level >= 70) return 'text-primary';
+  if (level >= 55) return 'text-accent';
+  if (level >= 40) return 'text-muted-foreground';
+  return 'text-muted-foreground';
+}
+
 export default function UnlockedReport({ result, email, setEmail, emailSubmitted, onEmailSubmit }: UnlockedReportProps) {
   const report = result.full_report;
   if (!report) return null;
 
   const sections = report.sections;
-
   const profileSection = sections.find(s => s.title === 'Perfil Predominante');
   const traitsSection = sections.find(s => s.type === 'traits');
   const otherSections = sections.filter(s => s.title !== 'Perfil Predominante' && s.type !== 'traits');
 
-  // Radar data
   const radarData = traitsSection?.traits?.map(t => ({
-    trait: t.name.length > 16 ? t.name.substring(0, 14) + '…' : t.name,
+    trait: t.name.length > 14 ? t.name.substring(0, 12) + '…' : t.name,
     value: t.level,
   })) || [];
 
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
       {/* Success banner */}
-      <div className="flex items-center gap-2 text-[hsl(var(--success))] font-medium bg-[hsl(var(--success))]/10 rounded-lg px-4 py-3">
-        <CheckCircle className="h-5 w-5" /> Relatório completo desbloqueado
-      </div>
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="flex items-center gap-3 font-semibold bg-success/10 text-success rounded-2xl px-5 py-4 border border-success/20"
+      >
+        <CheckCircle className="h-5 w-5 shrink-0" />
+        <span>Relatório completo desbloqueado</span>
+      </motion.div>
 
       {/* Profile header */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 via-background to-accent/5 overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2" />
-          <CardContent className="pt-8 pb-8 text-center space-y-4 relative">
-            <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Brain className="h-8 w-8 text-primary" />
+        <Card className="rounded-2xl border-primary/20 overflow-hidden">
+          <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
+          <CardContent className="pt-10 pb-10 text-center space-y-5 relative">
+            <div className="absolute top-0 right-0 w-40 h-40 bg-primary/5 rounded-full -translate-y-1/2 translate-x-1/2 blur-2xl" />
+            <div className="absolute bottom-0 left-0 w-32 h-32 bg-accent/5 rounded-full translate-y-1/2 -translate-x-1/2 blur-2xl" />
+            <div className="relative">
+              <div className="h-18 w-18 mx-auto rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl shadow-primary/25" style={{ height: '72px', width: '72px' }}>
+                <Brain className="h-9 w-9 text-primary-foreground" />
+              </div>
+              <p className="text-xs font-semibold text-primary uppercase tracking-[0.25em] mt-5">Perfil predominante</p>
+              <h2 className="text-3xl md:text-4xl font-display font-extrabold mt-2">{result.result_title}</h2>
+              <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed mt-3">
+                {profileSection?.content || result.result_summary}
+              </p>
             </div>
-            <p className="text-xs font-medium text-primary uppercase tracking-[0.2em]">Perfil predominante</p>
-            <h2 className="text-3xl md:text-4xl font-display font-bold">{result.result_title}</h2>
-            <p className="text-sm text-muted-foreground max-w-lg mx-auto leading-relaxed">
-              {profileSection?.content || result.result_summary}
-            </p>
           </CardContent>
         </Card>
       </motion.div>
 
-      {/* Radar Chart - Mapa de Traços Cognitivos */}
+      {/* Radar Chart */}
       {radarData.length >= 3 && (
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-primary to-accent text-primary-foreground">
                   <BarChart3 className="h-5 w-5" />
                 </div>
                 Mapa de Traços Cognitivos
               </CardTitle>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="space-y-8">
               <ResponsiveContainer width="100%" height={320}>
-                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="65%">
-                  <PolarGrid stroke="hsl(var(--border))" />
+                <RadarChart data={radarData} cx="50%" cy="50%" outerRadius="62%">
+                  <PolarGrid stroke="hsl(var(--border))" strokeOpacity={0.6} />
                   <PolarAngleAxis
                     dataKey="trait"
                     tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }}
@@ -136,28 +157,28 @@ export default function UnlockedReport({ result, email, setEmail, emailSubmitted
                   <Radar
                     name="Seu Perfil"
                     dataKey="value"
-                    stroke="hsl(221, 83%, 53%)"
-                    fill="hsl(221, 83%, 53%)"
-                    fillOpacity={0.15}
-                    strokeWidth={2}
+                    stroke="hsl(230, 75%, 57%)"
+                    fill="hsl(230, 75%, 57%)"
+                    fillOpacity={0.12}
+                    strokeWidth={2.5}
                   />
                 </RadarChart>
               </ResponsiveContainer>
 
               {/* Trait bars */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {traitsSection?.traits?.map((trait, i) => (
-                  <div key={trait.name} className="space-y-1.5">
-                    <div className="flex justify-between items-center text-sm">
-                      <span className="font-medium">{trait.name}</span>
-                      <span className="text-xs text-muted-foreground">{getTraitLabel(trait.level)}</span>
+                  <div key={trait.name} className="space-y-2">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold">{trait.name}</span>
+                      <span className={`text-xs font-semibold ${getTraitLabelColor(trait.level)}`}>{getTraitLabel(trait.level)}</span>
                     </div>
-                    <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                    <div className="h-3 bg-muted rounded-full overflow-hidden">
                       <motion.div
                         initial={{ width: 0 }}
                         animate={{ width: `${trait.level}%` }}
-                        transition={{ delay: 0.3 + i * 0.05, duration: 0.8 }}
-                        className={`h-full rounded-full ${TRAIT_COLORS[i % TRAIT_COLORS.length]}`}
+                        transition={{ delay: 0.3 + i * 0.06, duration: 0.8, ease: 'easeOut' }}
+                        className={`h-full rounded-full bg-gradient-to-r ${TRAIT_GRADIENTS[i % TRAIT_GRADIENTS.length]}`}
                       />
                     </div>
                   </div>
@@ -176,10 +197,10 @@ export default function UnlockedReport({ result, email, setEmail, emailSubmitted
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 + i * 0.06 }}
         >
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <div className="p-1.5 rounded-lg bg-primary/10 text-primary">
+          <Card className="rounded-2xl">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/10 text-primary">
                   {SECTION_ICONS[section.title] || <Brain className="h-5 w-5" />}
                 </div>
                 {section.title}
@@ -203,38 +224,38 @@ export default function UnlockedReport({ result, email, setEmail, emailSubmitted
                   {section.content && (
                     <p className="text-sm text-muted-foreground">{section.content}</p>
                   )}
-                  <ul className="space-y-2.5">
+                  <div className="grid gap-2">
                     {section.items?.map((item, j) => (
-                      <li key={j} className="flex items-start gap-2.5 text-sm">
+                      <div key={j} className="flex items-start gap-3 p-3 rounded-xl bg-muted/50 text-sm">
                         <div className="mt-0.5 shrink-0">
                           {section.type === 'environments' ? (
                             <Compass className="h-4 w-4 text-accent" />
                           ) : (
-                            <CheckCircle className="h-4 w-4 text-[hsl(var(--success))]" />
+                            <CheckCircle className="h-4 w-4 text-success" />
                           )}
                         </div>
                         <span className="text-muted-foreground">{item}</span>
-                      </li>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                 </>
               )}
 
-              {/* Styles (problem solving, learning) */}
+              {/* Styles */}
               {section.type === 'styles' && section.styles && (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {section.styles.map((style, j) => (
-                    <div key={style.name} className="space-y-1.5">
-                      <div className="flex justify-between items-center text-sm">
-                        <span className="font-medium">{style.name}</span>
-                        <span className="text-xs text-muted-foreground">{getTraitLabel(style.level)}</span>
+                    <div key={style.name} className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        <span className="text-sm font-semibold">{style.name}</span>
+                        <span className={`text-xs font-semibold ${getTraitLabelColor(style.level)}`}>{getTraitLabel(style.level)}</span>
                       </div>
-                      <div className="h-2.5 bg-muted rounded-full overflow-hidden">
+                      <div className="h-3 bg-muted rounded-full overflow-hidden">
                         <motion.div
                           initial={{ width: 0 }}
                           animate={{ width: `${style.level}%` }}
                           transition={{ delay: 0.5 + j * 0.1, duration: 0.8 }}
-                          className={`h-full rounded-full ${TRAIT_COLORS[(j + 3) % TRAIT_COLORS.length]}`}
+                          className={`h-full rounded-full bg-gradient-to-r ${TRAIT_GRADIENTS[(j + 3) % TRAIT_GRADIENTS.length]}`}
                         />
                       </div>
                     </div>
@@ -248,13 +269,16 @@ export default function UnlockedReport({ result, email, setEmail, emailSubmitted
 
       {/* Email capture */}
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.2 }}>
-        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-accent/5">
-          <CardContent className="pt-6">
+        <Card className="rounded-2xl border-primary/20 overflow-hidden">
+          <div className="h-1 bg-gradient-to-r from-primary via-accent to-primary" />
+          <CardContent className="pt-6 pb-6">
             {!emailSubmitted ? (
-              <form onSubmit={onEmailSubmit} className="space-y-3">
-                <div className="flex items-center gap-2 mb-1">
-                  <Mail className="h-4 w-4 text-primary" />
-                  <p className="text-sm font-semibold">Receba uma cópia do seu relatório por email</p>
+              <form onSubmit={onEmailSubmit} className="space-y-4">
+                <div className="flex items-center gap-2.5 mb-1">
+                  <div className="p-1.5 rounded-lg bg-primary/10">
+                    <Mail className="h-4 w-4 text-primary" />
+                  </div>
+                  <p className="text-sm font-display font-bold">Receba uma cópia do seu relatório</p>
                 </div>
                 <p className="text-xs text-muted-foreground">Enviaremos seu resultado completo para consultar quando quiser.</p>
                 <div className="flex gap-2">
@@ -264,16 +288,16 @@ export default function UnlockedReport({ result, email, setEmail, emailSubmitted
                     value={email}
                     onChange={e => setEmail(e.target.value)}
                     required
-                    className="flex-1"
+                    className="flex-1 rounded-xl h-11"
                   />
-                  <Button type="submit">
-                    <Mail className="mr-1 h-4 w-4" /> Enviar
+                  <Button type="submit" className="rounded-xl h-11">
+                    <Mail className="mr-1.5 h-4 w-4" /> Enviar
                   </Button>
                 </div>
               </form>
             ) : (
-              <div className="flex items-center gap-2 text-[hsl(var(--success))]">
-                <CheckCircle className="h-5 w-5" />
+              <div className="flex items-center gap-3 text-success">
+                <CheckCircle className="h-5 w-5 shrink-0" />
                 <div>
                   <p className="text-sm font-semibold">Email salvo com sucesso!</p>
                   <p className="text-xs text-muted-foreground">Você receberá uma cópia do relatório em breve.</p>
@@ -287,8 +311,8 @@ export default function UnlockedReport({ result, email, setEmail, emailSubmitted
       {/* Disclaimer */}
       {report.disclaimer && (
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }}>
-          <div className="rounded-lg border border-border bg-muted/50 p-4">
-            <div className="flex items-start gap-2">
+          <div className="rounded-2xl border border-border/50 bg-muted/30 p-5">
+            <div className="flex items-start gap-3">
               <Shield className="h-4 w-4 text-muted-foreground mt-0.5 shrink-0" />
               <p className="text-xs text-muted-foreground leading-relaxed">{report.disclaimer}</p>
             </div>

@@ -6,7 +6,8 @@ import Footer from '@/components/Footer';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
 import { Button } from '@/components/ui/button';
 import { useMetrics } from '@/hooks/useMetrics';
-import { Brain, Zap, Heart, Activity, User, Clock, CheckCircle, ArrowRight } from 'lucide-react';
+import { Brain, Zap, Heart, Activity, User, Clock, CheckCircle, ArrowRight, Sparkles, BarChart3, Shield } from 'lucide-react';
+import { motion } from 'framer-motion';
 
 const iconMap: Record<string, React.ComponentType<{ className?: string }>> = { Brain, Zap, Heart, Activity, User };
 
@@ -37,36 +38,75 @@ export default function QuizLanding() {
   const Icon = iconMap[quiz.icon] || Brain;
   const isTDAH = quiz.slug === 'indicadores-de-tdah';
 
+  const features = [
+    { icon: BarChart3, text: 'Resultado preliminar gratuito' },
+    { icon: Sparkles, text: 'Relatório personalizado completo' },
+    { icon: Shield, text: 'Comparação com outros participantes' },
+  ];
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1">
-        <section className="py-16 md:py-24">
-          <div className="container max-w-2xl mx-auto text-center space-y-8">
-            <div className="h-20 w-20 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Icon className="h-10 w-10 text-primary" />
-            </div>
-            <h1 className="text-3xl md:text-5xl font-display font-bold">{quiz.title}</h1>
-            <p className="text-lg text-muted-foreground">{quiz.description}</p>
+        <section className="py-20 md:py-28">
+          <div className="container max-w-2xl mx-auto space-y-10">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="text-center space-y-6"
+            >
+              <div className="h-20 w-20 mx-auto rounded-3xl bg-gradient-to-br from-primary to-accent flex items-center justify-center shadow-xl shadow-primary/20">
+                <Icon className="h-10 w-10 text-primary-foreground" />
+              </div>
 
-            <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
-              <span className="flex items-center gap-1.5"><Clock className="h-4 w-4" /> Leva cerca de {quiz.duration_minutes} minutos</span>
-              <span className="flex items-center gap-1.5"><CheckCircle className="h-4 w-4" /> {quiz.question_count} perguntas</span>
-            </div>
+              <h1 className="text-3xl md:text-5xl font-display font-extrabold leading-tight">{quiz.title}</h1>
+              <p className="text-lg text-muted-foreground leading-relaxed max-w-lg mx-auto">{quiz.description}</p>
 
-            <div className="bg-card rounded-xl p-6 border border-border text-left space-y-3">
-              <h3 className="font-display font-semibold text-lg">O que você recebe:</h3>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-success shrink-0" /> Resultado preliminar gratuito</li>
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-success shrink-0" /> Relatório personalizado completo</li>
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-success shrink-0" /> Comparação com outros participantes</li>
-                <li className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-success shrink-0" /> Envio do resultado por email</li>
-              </ul>
-            </div>
+              <div className="flex flex-wrap items-center justify-center gap-4 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5 bg-muted rounded-full px-4 py-1.5">
+                  <Clock className="h-4 w-4 text-primary" /> {quiz.duration_minutes} minutos
+                </span>
+                <span className="flex items-center gap-1.5 bg-muted rounded-full px-4 py-1.5">
+                  <Sparkles className="h-4 w-4 text-primary" /> {quiz.question_count} perguntas
+                </span>
+              </div>
+            </motion.div>
 
-            <Button size="lg" className="text-lg px-10 py-6" onClick={() => navigate(`/quiz/${slug}/play`)}>
-              Começar agora <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              className="rounded-2xl bg-card border border-border/50 p-8 space-y-5"
+            >
+              <h3 className="font-display font-bold text-lg flex items-center gap-2">
+                <CheckCircle className="h-5 w-5 text-success" /> O que você recebe
+              </h3>
+              <div className="grid gap-4">
+                {features.map((f, i) => (
+                  <div key={i} className="flex items-center gap-3 p-3 rounded-xl bg-muted/50">
+                    <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                      <f.icon className="h-5 w-5 text-primary" />
+                    </div>
+                    <span className="text-sm font-medium">{f.text}</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="text-center"
+            >
+              <Button
+                size="lg"
+                className="text-lg px-12 py-7 rounded-2xl shadow-lg shadow-primary/20 hover:shadow-primary/40 transition-shadow font-display font-bold"
+                onClick={() => navigate(`/quiz/${slug}/play`)}
+              >
+                Começar agora <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </motion.div>
 
             <DisclaimerBanner variant={isTDAH ? 'strong' : 'default'} />
           </div>
