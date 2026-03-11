@@ -103,8 +103,10 @@ export default function QuizResult() {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!result) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Resultado não encontrado.</div>;
 
+  const isIQTest = slug === 'teste-de-qi';
   const isTDAH = slug === 'indicadores-de-tdah';
-  const report = result.full_report as { sections: any[]; disclaimer: string } | null;
+  const report = result.full_report as { sections: any[]; disclaimer: string; iqScore?: number } | null;
+  const iqScore = report?.iqScore;
 
   const previewSections = report?.sections?.filter(s =>
     s.title !== 'Perfil Predominante' && s.type !== 'traits'
