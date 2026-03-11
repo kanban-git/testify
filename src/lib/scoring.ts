@@ -15,78 +15,314 @@ export interface FullReport {
 export interface ReportSection {
   title: string;
   content: string;
-  score?: number;
-  maxScore?: number;
+  type?: 'text' | 'traits' | 'list' | 'styles' | 'environments';
+  items?: string[];
+  traits?: { name: string; level: number }[];
+  styles?: { name: string; level: number }[];
 }
 
-// Trait mapping: each question index (0-15) maps to cognitive traits with weights
-const COGNITIVE_TRAIT_MAP: Record<string, number[]> = {
-  'raciocinio_analitico':      [0, 1, 2, 10, 15],   // Q1,2,3,11,16
-  'praticidade':               [0, 5, 8, 12],         // Q1,6,9,13
-  'flexibilidade_mental':      [4, 11, 12],           // Q5,12,13
-  'impulsividade_decisoria':   [12],                   // Q13 (high = more impulsive)
-  'atencao_detalhes':          [2, 7, 15],             // Q3,8,16
-  'organizacao_pensamento':    [0, 5, 8, 13],          // Q1,6,9,14
-  'velocidade_decisao':        [12, 8],                // Q13,9
-  'preferencia_estrutura':     [5, 13],                // Q6,14
-  'adaptacao_novas_info':      [4, 11],                // Q5,12
-  'logica_vs_intuicao':        [3, 14],                // Q4,15
+// ======================== TRAIT MAPS (question index → trait) ========================
+
+const QUIZ_TRAITS: Record<string, { traits: Record<string, number[]>; profiles: { traits: string[]; name: string; desc: string }[] }> = {
+  'perfil-de-raciocinio': {
+    traits: {
+      'Raciocínio analítico': [0, 7, 19],
+      'Pensamento estratégico': [4, 2, 17],
+      'Curiosidade intelectual': [9, 13, 15],
+      'Flexibilidade mental': [1, 12, 11],
+      'Atenção a detalhes': [7, 0, 5],
+      'Organização do pensamento': [3, 16, 10],
+      'Tomada de decisão': [2, 17, 18],
+      'Pensamento abstrato': [1, 12, 14],
+      'Capacidade de aprendizado': [13, 5, 9],
+      'Criatividade cognitiva': [12, 11, 1],
+    },
+    profiles: [
+      { traits: ['Raciocínio analítico', 'Pensamento estratégico'], name: 'Analítico Estratégico', desc: 'Você processa informações de forma metódica e estruturada, com forte capacidade de planejamento e análise sistemática. Seu estilo cognitivo combina precisão analítica com visão estratégica.' },
+      { traits: ['Organização do pensamento', 'Atenção a detalhes'], name: 'Estruturado Observador', desc: 'Você possui um pensamento organizado e atento aos detalhes, com capacidade natural de identificar padrões e manter clareza em situações complexas.' },
+      { traits: ['Flexibilidade mental', 'Criatividade cognitiva'], name: 'Criativo Adaptável', desc: 'Seu perfil demonstra grande flexibilidade mental e capacidade criativa, permitindo que você encontre soluções inovadoras e se adapte facilmente a novos contextos.' },
+      { traits: ['Tomada de decisão', 'Raciocínio analítico'], name: 'Decisivo Analítico', desc: 'Você combina capacidade analítica com assertividade na tomada de decisão, processando informações com eficiência para chegar a conclusões fundamentadas.' },
+      { traits: ['Curiosidade intelectual', 'Capacidade de aprendizado'], name: 'Explorador Intelectual', desc: 'Sua forte curiosidade intelectual aliada à capacidade de aprendizado faz de você alguém que busca constantemente expandir seus conhecimentos e compreender o mundo.' },
+    ],
+  },
+  'cerebro-acima-da-media': {
+    traits: {
+      'Raciocínio analítico': [2, 11, 14],
+      'Pensamento estratégico': [14, 8, 16],
+      'Curiosidade intelectual': [0, 1, 19],
+      'Flexibilidade mental': [7, 18, 5],
+      'Atenção a detalhes': [11, 15, 16],
+      'Organização do pensamento': [15, 3, 16],
+      'Tomada de decisão': [2, 8, 14],
+      'Pensamento abstrato': [12, 18, 7],
+      'Capacidade de aprendizado': [0, 4, 10],
+      'Criatividade cognitiva': [18, 7, 5],
+    },
+    profiles: [
+      { traits: ['Curiosidade intelectual', 'Capacidade de aprendizado'], name: 'Mente Expansiva', desc: 'Você possui uma mente naturalmente curiosa e absorvente, com capacidade excepcional de processar e integrar novos conhecimentos de forma rápida e eficiente.' },
+      { traits: ['Pensamento abstrato', 'Raciocínio analítico'], name: 'Pensador Profundo', desc: 'Seu perfil revela um processamento cognitivo profundo, com habilidade para lidar com conceitos abstratos e análises complexas que muitos não conseguem acompanhar.' },
+      { traits: ['Flexibilidade mental', 'Criatividade cognitiva'], name: 'Inovador Versátil', desc: 'Sua mente funciona de forma não linear e criativa, conectando ideias de diferentes domínios para gerar insights originais e soluções inovadoras.' },
+      { traits: ['Organização do pensamento', 'Atenção a detalhes'], name: 'Analista Preciso', desc: 'Você combina organização mental com atenção aos detalhes, processando informações com uma precisão que permite compreender nuances que passam despercebidas.' },
+    ],
+  },
+  'personalidade-profunda': {
+    traits: {
+      'Raciocínio analítico': [2, 18, 11],
+      'Pensamento estratégico': [11, 19, 5],
+      'Curiosidade intelectual': [12, 14, 9],
+      'Flexibilidade mental': [7, 10, 15],
+      'Atenção a detalhes': [2, 8, 18],
+      'Organização do pensamento': [15, 8, 11],
+      'Tomada de decisão': [19, 11, 5],
+      'Pensamento abstrato': [0, 14, 12],
+      'Capacidade de aprendizado': [7, 10, 17],
+      'Criatividade cognitiva': [0, 6, 14],
+    },
+    profiles: [
+      { traits: ['Pensamento abstrato', 'Curiosidade intelectual'], name: 'Introspectivo Profundo', desc: 'Você possui uma rica vida interior e capacidade excepcional de autorreflexão. Seu perfil indica alguém que busca compreender as camadas mais profundas da experiência humana.' },
+      { traits: ['Capacidade de aprendizado', 'Flexibilidade mental'], name: 'Evolutivo Consciente', desc: 'Seu perfil demonstra uma busca constante por crescimento pessoal, com flexibilidade para integrar novas perspectivas e evoluir continuamente.' },
+      { traits: ['Atenção a detalhes', 'Raciocínio analítico'], name: 'Observador Analítico', desc: 'Você combina sensibilidade emocional com capacidade analítica, permitindo compreender tanto a si mesmo quanto os outros com profundidade incomum.' },
+      { traits: ['Organização do pensamento', 'Tomada de decisão'], name: 'Equilibrado Estratégico', desc: 'Seu perfil revela equilíbrio entre razão e emoção, com capacidade de organizar pensamentos e tomar decisões alinhadas com seus valores mais profundos.' },
+    ],
+  },
+  'indicadores-de-tdah': {
+    traits: {
+      'Raciocínio analítico': [3, 10, 14],
+      'Pensamento estratégico': [10, 14, 3],
+      'Curiosidade intelectual': [11, 15, 7],
+      'Flexibilidade mental': [11, 6, 15],
+      'Atenção a detalhes': [0, 5, 19],
+      'Organização do pensamento': [3, 13, 14],
+      'Tomada de decisão': [10, 14, 4],
+      'Pensamento abstrato': [11, 15, 7],
+      'Capacidade de aprendizado': [8, 1, 18],
+      'Criatividade cognitiva': [11, 15, 6],
+    },
+    profiles: [
+      { traits: ['Flexibilidade mental', 'Criatividade cognitiva'], name: 'Mente Dinâmica', desc: 'Seu perfil sugere uma mente altamente dinâmica, com pensamento rápido e capacidade de fazer múltiplas conexões simultaneamente. Esse padrão pode trazer tanto desafios de foco quanto vantagens criativas.' },
+      { traits: ['Curiosidade intelectual', 'Pensamento abstrato'], name: 'Explorador Inquieto', desc: 'Você demonstra curiosidade intensa e pensamento divergente, com tendência a explorar múltiplas ideias simultaneamente. Esse padrão é comum em mentes altamente criativas.' },
+      { traits: ['Atenção a detalhes', 'Organização do pensamento'], name: 'Focado Seletivo', desc: 'Seu perfil indica capacidade de foco intenso em temas de interesse, com dificuldade variável em tarefas rotineiras. Esse padrão sugere atenção seletiva.' },
+    ],
+  },
+  'perfil-psicologico-completo': {
+    traits: {
+      'Raciocínio analítico': [4, 9, 3],
+      'Pensamento estratégico': [3, 8, 14],
+      'Curiosidade intelectual': [18, 19, 6],
+      'Flexibilidade mental': [2, 13, 16],
+      'Atenção a detalhes': [8, 12, 4],
+      'Organização do pensamento': [8, 12, 14],
+      'Tomada de decisão': [3, 11, 4],
+      'Pensamento abstrato': [18, 6, 19],
+      'Capacidade de aprendizado': [19, 16, 2],
+      'Criatividade cognitiva': [2, 13, 6],
+    },
+    profiles: [
+      { traits: ['Tomada de decisão', 'Flexibilidade mental'], name: 'Resiliente Adaptável', desc: 'Seu perfil demonstra alta capacidade de adaptação e resiliência emocional, com habilidade para tomar decisões assertivas mesmo sob pressão.' },
+      { traits: ['Organização do pensamento', 'Atenção a detalhes'], name: 'Disciplinado Focado', desc: 'Você possui forte disciplina mental e capacidade de manter foco em objetivos de longo prazo, com organização que sustenta consistência nas suas ações.' },
+      { traits: ['Curiosidade intelectual', 'Pensamento abstrato'], name: 'Visionário Empático', desc: 'Seu perfil combina visão de futuro com compreensão profunda do comportamento humano, permitindo que você navegue situações complexas com sabedoria.' },
+      { traits: ['Raciocínio analítico', 'Pensamento estratégico'], name: 'Estrategista Equilibrado', desc: 'Você combina estabilidade emocional com pensamento estratégico, criando um perfil que se destaca em situações que exigem clareza e liderança.' },
+    ],
+  },
 };
 
-const TRAIT_LABELS: Record<string, string> = {
-  'raciocinio_analitico': 'Raciocínio Analítico',
-  'praticidade': 'Praticidade',
-  'flexibilidade_mental': 'Flexibilidade Mental',
-  'impulsividade_decisoria': 'Velocidade Decisória',
-  'atencao_detalhes': 'Atenção a Detalhes',
-  'organizacao_pensamento': 'Organização do Pensamento',
-  'velocidade_decisao': 'Velocidade de Decisão',
-  'preferencia_estrutura': 'Preferência por Estrutura',
-  'adaptacao_novas_info': 'Adaptação a Novas Informações',
-  'logica_vs_intuicao': 'Lógica vs Intuição',
-};
+// ======================== CORE SCORING ========================
 
-const PROFILE_COMBINATIONS: { traits: string[]; name: string }[] = [
-  { traits: ['raciocinio_analitico', 'praticidade'], name: 'Analítico-Prático' },
-  { traits: ['organizacao_pensamento', 'atencao_detalhes'], name: 'Estruturado-Detalhista' },
-  { traits: ['flexibilidade_mental', 'raciocinio_analitico'], name: 'Flexível-Estratégico' },
-  { traits: ['praticidade', 'velocidade_decisao'], name: 'Objetivo-Resolutivo' },
-  { traits: ['flexibilidade_mental', 'adaptacao_novas_info'], name: 'Intuitivo-Adaptável' },
-  { traits: ['atencao_detalhes', 'raciocinio_analitico'], name: 'Observador-Analítico' },
-];
-
-function computeTraitScores(responses: { score_value: number }[]): Record<string, { score: number; max: number; pct: number }> {
-  const result: Record<string, { score: number; max: number; pct: number }> = {};
-  for (const [trait, indices] of Object.entries(COGNITIVE_TRAIT_MAP)) {
-    let score = 0, max = 0;
+function computeTraitLevels(responses: { score_value: number }[], traitMap: Record<string, number[]>): Record<string, number> {
+  const result: Record<string, number> = {};
+  for (const [trait, indices] of Object.entries(traitMap)) {
+    let total = 0;
     for (const idx of indices) {
-      score += responses[idx]?.score_value || 3;
-      max += 5;
+      total += responses[idx]?.score_value || 3;
     }
-    result[trait] = { score, max, pct: max > 0 ? (score / max) * 100 : 50 };
+    // Normalize to 0-100
+    const max = indices.length * 5;
+    result[trait] = Math.round((total / max) * 100);
   }
   return result;
 }
 
-function determinePrimaryProfile(traitScores: Record<string, { score: number; max: number; pct: number }>): string {
-  let bestMatch = PROFILE_COMBINATIONS[0].name;
+function pickProfile(traitLevels: Record<string, number>, profiles: { traits: string[]; name: string; desc: string }[]): { name: string; desc: string } {
+  let best = profiles[0];
   let bestScore = -1;
-  for (const combo of PROFILE_COMBINATIONS) {
-    const avg = combo.traits.reduce((sum, t) => sum + (traitScores[t]?.pct || 50), 0) / combo.traits.length;
-    if (avg > bestScore) { bestScore = avg; bestMatch = combo.name; }
+  for (const p of profiles) {
+    const avg = p.traits.reduce((s, t) => s + (traitLevels[t] || 50), 0) / p.traits.length;
+    if (avg > bestScore) { bestScore = avg; best = p; }
   }
-  return bestMatch;
+  return best;
 }
 
-function computeConsistency(responses: { score_value: number }[]): number {
-  if (responses.length < 2) return 5;
-  const vals = responses.map(r => r.score_value);
-  const mean = vals.reduce((s, v) => s + v, 0) / vals.length;
-  const variance = vals.reduce((s, v) => s + Math.pow(v - mean, 2), 0) / vals.length;
-  const sd = Math.sqrt(variance);
-  // Lower SD = more consistent, map to 1-10
-  return Math.max(1, Math.min(10, Math.round(10 - sd * 2)));
+function generatePercentile(traitLevels: Record<string, number>): number {
+  const avg = Object.values(traitLevels).reduce((s, v) => s + v, 0) / Object.values(traitLevels).length;
+  // Map average (20-100) to percentile (45-97)
+  return Math.min(97, Math.max(45, Math.round(avg * 0.65 + 30 + Math.random() * 8)));
 }
+
+// ======================== REPORT GENERATORS ========================
+
+function getThinkingStyle(traitLevels: Record<string, number>): string {
+  const analytical = traitLevels['Raciocínio analítico'] || 50;
+  const strategic = traitLevels['Pensamento estratégico'] || 50;
+  const abstract = traitLevels['Pensamento abstrato'] || 50;
+  const creative = traitLevels['Criatividade cognitiva'] || 50;
+  const flexibility = traitLevels['Flexibilidade mental'] || 50;
+
+  if (analytical > 70 && strategic > 65) {
+    return 'Você tende a abordar problemas de forma sistemática e estruturada, decomponho situações complexas em partes menores e analisando cada componente antes de formar uma conclusão. Seu estilo de pensamento privilegia a lógica e a evidência, buscando sempre fundamentar suas decisões em dados concretos. Em situações de pressão, você mantém a capacidade de raciocinar com clareza, o que lhe permite encontrar soluções eficientes mesmo em cenários desafiadores.';
+  } else if (creative > 70 && flexibility > 65) {
+    return 'Seu estilo de pensamento é predominantemente criativo e divergente. Você naturalmente faz conexões entre ideias de domínios diferentes, gerando insights que outros dificilmente perceberiam. Sua mente funciona de forma não linear, explorando múltiplas possibilidades antes de se comprometer com uma solução. Essa abordagem lhe confere uma vantagem significativa em situações que exigem inovação e adaptabilidade.';
+  } else if (abstract > 70) {
+    return 'Você possui um estilo de pensamento profundo e reflexivo, com facilidade para lidar com conceitos abstratos e teóricos. Sua mente busca naturalmente compreender os princípios subjacentes às situações, indo além da superfície para encontrar significados mais profundos. Esse padrão cognitivo permite que você desenvolva compreensões sofisticadas sobre temas complexos.';
+  } else {
+    return 'Seu estilo de pensamento é equilibrado, combinando elementos analíticos e intuitivos de forma flexível. Você adapta sua abordagem cognitiva de acordo com a situação, alternando entre análise detalhada e visão mais ampla conforme a necessidade. Essa versatilidade lhe permite lidar eficazmente com uma ampla variedade de desafios, tanto no âmbito pessoal quanto profissional.';
+  }
+}
+
+function getPotentials(traitLevels: Record<string, number>): string[] {
+  const sorted = Object.entries(traitLevels).sort((a, b) => b[1] - a[1]);
+  const potentials: string[] = [];
+  const mapping: Record<string, string> = {
+    'Raciocínio analítico': 'Potencial analítico elevado',
+    'Pensamento estratégico': 'Potencial estratégico e de planejamento',
+    'Curiosidade intelectual': 'Curiosidade intelectual acima da média',
+    'Flexibilidade mental': 'Alta adaptabilidade cognitiva',
+    'Atenção a detalhes': 'Capacidade de observação refinada',
+    'Organização do pensamento': 'Clareza e organização mental',
+    'Tomada de decisão': 'Assertividade na tomada de decisão',
+    'Pensamento abstrato': 'Pensamento conceitual avançado',
+    'Capacidade de aprendizado': 'Capacidade de aprendizado acelerada',
+    'Criatividade cognitiva': 'Potencial criativo e inovador',
+  };
+  for (const [trait] of sorted.slice(0, 5)) {
+    potentials.push(mapping[trait] || trait);
+  }
+  return potentials;
+}
+
+function getRealLifeText(profileName: string, traitLevels: Record<string, number>): string {
+  const high = Object.entries(traitLevels).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
+
+  return `No ambiente de **trabalho**, seu perfil ${profileName} tende a se manifestar como uma capacidade natural de ${high.includes('Raciocínio analítico') ? 'analisar dados e encontrar soluções baseadas em evidências' : high.includes('Criatividade cognitiva') ? 'propor abordagens inovadoras e soluções criativas' : 'organizar processos e manter a qualidade das entregas'}. Colegas provavelmente o reconhecem como alguém ${high.includes('Pensamento estratégico') ? 'estratégico e com visão de longo prazo' : 'confiável e consistente nas entregas'}.
+
+Nos **estudos**, você provavelmente se destaca em ${high.includes('Capacidade de aprendizado') ? 'absorver novos conceitos rapidamente e fazer conexões interdisciplinares' : high.includes('Atenção a detalhes') ? 'compreender nuances e detalhes que outros ignoram' : 'manter consistência e disciplina no aprendizado'}. Seu estilo de aprendizado é mais eficiente quando ${high.includes('Pensamento abstrato') ? 'você tem liberdade para explorar conceitos teóricos' : 'o conteúdo é apresentado de forma estruturada e aplicável'}.
+
+Na **resolução de problemas**, você tende a ${high.includes('Flexibilidade mental') ? 'considerar múltiplas perspectivas antes de agir, o que pode demorar mais mas gera soluções mais completas' : 'ir direto ao ponto com eficiência, priorizando soluções práticas e implementáveis'}. Nas **decisões** importantes, seu perfil indica ${high.includes('Tomada de decisão') ? 'confiança e assertividade, com capacidade de assumir riscos calculados' : 'reflexão cuidadosa, ponderando prós e contras antes de se comprometer'}.`;
+}
+
+function getStrengths(traitLevels: Record<string, number>): string[] {
+  const sorted = Object.entries(traitLevels).sort((a, b) => b[1] - a[1]);
+  const strengths: Record<string, string[]> = {
+    'Raciocínio analítico': ['Análise lógica e fundamentada', 'Capacidade de decompor problemas complexos'],
+    'Pensamento estratégico': ['Visão de longo prazo', 'Planejamento eficaz'],
+    'Curiosidade intelectual': ['Busca constante por conhecimento', 'Mente aberta a novas ideias'],
+    'Flexibilidade mental': ['Adaptação rápida a mudanças', 'Pensamento divergente'],
+    'Atenção a detalhes': ['Percepção aguçada', 'Precisão nas análises'],
+    'Organização do pensamento': ['Clareza na comunicação', 'Estruturação eficiente de ideias'],
+    'Tomada de decisão': ['Assertividade', 'Confiança sob pressão'],
+    'Pensamento abstrato': ['Compreensão de conceitos complexos', 'Pensamento teórico avançado'],
+    'Capacidade de aprendizado': ['Aprendizado rápido', 'Integração de conhecimentos diversos'],
+    'Criatividade cognitiva': ['Geração de ideias originais', 'Conexões interdisciplinares'],
+  };
+  const result: string[] = [];
+  for (const [trait] of sorted.slice(0, 5)) {
+    result.push(...(strengths[trait] || [trait]));
+  }
+  return result.slice(0, 7);
+}
+
+function getDevelopmentAreas(traitLevels: Record<string, number>): string[] {
+  const sorted = Object.entries(traitLevels).sort((a, b) => a[1] - b[1]);
+  const areas: Record<string, string> = {
+    'Raciocínio analítico': 'Exercitar mais a análise sistemática de problemas, buscando decompor situações complexas em componentes menores.',
+    'Pensamento estratégico': 'Desenvolver o hábito de planejar com antecedência e considerar consequências de longo prazo.',
+    'Curiosidade intelectual': 'Cultivar o hábito de questionar e explorar novos temas fora da sua zona de conforto.',
+    'Flexibilidade mental': 'Praticar a consideração de perspectivas alternativas e abraçar mudanças como oportunidades.',
+    'Atenção a detalhes': 'Desenvolver técnicas de revisão e checagem para capturar nuances importantes.',
+    'Organização do pensamento': 'Implementar métodos de organização mental como mapas conceituais ou listas estruturadas.',
+    'Tomada de decisão': 'Praticar decisões mais rápidas em situações de baixo risco para desenvolver confiança.',
+    'Pensamento abstrato': 'Exercitar o pensamento conceitual através de leitura reflexiva e discussões filosóficas.',
+    'Capacidade de aprendizado': 'Experimentar diferentes métodos de aprendizado para descobrir os mais eficientes para você.',
+    'Criatividade cognitiva': 'Reservar tempo para brainstorming livre e exploração de ideias sem julgamento.',
+  };
+  const result: string[] = [];
+  for (const [trait] of sorted.slice(0, 3)) {
+    if (areas[trait]) result.push(areas[trait]);
+  }
+  return result;
+}
+
+function getProblemSolvingStyles(traitLevels: Record<string, number>): { name: string; level: number }[] {
+  return [
+    { name: 'Analítico', level: Math.round(((traitLevels['Raciocínio analítico'] || 50) + (traitLevels['Atenção a detalhes'] || 50)) / 2) },
+    { name: 'Intuitivo', level: Math.round(((traitLevels['Pensamento abstrato'] || 50) + (traitLevels['Criatividade cognitiva'] || 50)) / 2) },
+    { name: 'Estratégico', level: Math.round(((traitLevels['Pensamento estratégico'] || 50) + (traitLevels['Tomada de decisão'] || 50)) / 2) },
+    { name: 'Exploratório', level: Math.round(((traitLevels['Curiosidade intelectual'] || 50) + (traitLevels['Flexibilidade mental'] || 50)) / 2) },
+  ];
+}
+
+function getLearningStyles(traitLevels: Record<string, number>): { name: string; level: number }[] {
+  return [
+    { name: 'Visual', level: Math.round(((traitLevels['Atenção a detalhes'] || 50) + (traitLevels['Organização do pensamento'] || 50)) / 2) },
+    { name: 'Analítico', level: Math.round(((traitLevels['Raciocínio analítico'] || 50) + (traitLevels['Pensamento estratégico'] || 50)) / 2) },
+    { name: 'Exploratório', level: Math.round(((traitLevels['Curiosidade intelectual'] || 50) + (traitLevels['Criatividade cognitiva'] || 50)) / 2) },
+    { name: 'Estruturado', level: Math.round(((traitLevels['Organização do pensamento'] || 50) + (traitLevels['Atenção a detalhes'] || 50)) / 2) },
+  ];
+}
+
+function getEnvironments(traitLevels: Record<string, number>): string[] {
+  const envs: string[] = [];
+  const sorted = Object.entries(traitLevels).sort((a, b) => b[1] - a[1]);
+  const top = sorted.slice(0, 4).map(e => e[0]);
+  if (top.includes('Raciocínio analítico')) envs.push('Ambientes que exigem análise de dados e resolução de problemas');
+  if (top.includes('Pensamento estratégico')) envs.push('Situações que demandam planejamento e visão de longo prazo');
+  if (top.includes('Curiosidade intelectual')) envs.push('Contextos de aprendizado contínuo e inovação');
+  if (top.includes('Flexibilidade mental')) envs.push('Ambientes dinâmicos com mudanças frequentes');
+  if (top.includes('Criatividade cognitiva')) envs.push('Projetos criativos e desenvolvimento de novas soluções');
+  if (top.includes('Organização do pensamento')) envs.push('Funções que exigem estruturação e gestão de processos');
+  if (top.includes('Tomada de decisão')) envs.push('Posições de liderança e gestão de equipes');
+  if (top.includes('Capacidade de aprendizado')) envs.push('Áreas de pesquisa e desenvolvimento intelectual');
+  return envs.slice(0, 5);
+}
+
+function getComparisonText(percentile: number, profileName: string): string {
+  if (percentile >= 85) {
+    return `Suas respostas posicionam seu perfil entre os mais diferenciados da nossa base de participantes. O perfil ${profileName} na intensidade demonstrada nas suas respostas aparece em menos de ${100 - percentile}% dos respondentes. Isso não indica superioridade, mas sim um padrão cognitivo bem definido e consistente, que pode ser um diferencial significativo quando aplicado nos contextos certos.`;
+  } else if (percentile >= 65) {
+    return `Seu perfil ${profileName} demonstra características que se destacam em relação à maioria dos participantes. Aproximadamente ${percentile}% dos respondentes apresentaram padrões menos definidos nas áreas em que você se sobressai. Esse nível de clareza no perfil cognitivo indica autoconhecimento e consistência nos seus padrões de pensamento.`;
+  } else {
+    return `Seu perfil ${profileName} apresenta uma distribuição equilibrada de traços cognitivos, o que indica versatilidade. Aproximadamente ${percentile}% dos participantes mostraram padrões similares. Essa distribuição sugere que você consegue transitar entre diferentes estilos de pensamento conforme a situação exige, o que é uma habilidade valiosa em ambientes diversos.`;
+  }
+}
+
+function getFinalInterpretation(profileName: string, traitLevels: Record<string, number>, quizSlug: string): string {
+  const sorted = Object.entries(traitLevels).sort((a, b) => b[1] - a[1]);
+  const top3 = sorted.slice(0, 3).map(e => e[0]);
+  const lowest = sorted.slice(-2).map(e => e[0]);
+
+  const isTDAH = quizSlug === 'indicadores-de-tdah';
+
+  if (isTDAH) {
+    return `A análise das suas respostas revela um padrão comportamental do tipo ${profileName}. É importante compreender que os traços identificados não representam necessariamente um diagnóstico, mas sim tendências comportamentais que podem ser trabalhadas e compreendidas.
+
+Seus resultados indicam que suas características predominantes estão nas áreas de ${top3.join(', ').toLowerCase()}, enquanto ${lowest.join(' e ').toLowerCase()} representam áreas com menor expressão no momento. Esse padrão é relativamente comum e pode se manifestar de formas diferentes dependendo do contexto e do momento de vida.
+
+Recomendamos que, caso os resultados tenham ressonado com suas experiências diárias, você considere consultar um profissional de saúde mental para uma avaliação mais aprofundada. Profissionais qualificados podem oferecer orientação personalizada e, se necessário, estratégias específicas para melhorar sua qualidade de vida.
+
+Lembre-se: este teste é uma ferramenta informativa e não substitui avaliação clínica profissional.`;
+  }
+
+  return `A análise integrada das suas respostas revela um perfil cognitivo predominantemente ${profileName}. Este padrão indica que seu processamento mental privilegia ${top3[0].toLowerCase()} e ${top3[1].toLowerCase()}, criando uma base sólida para atividades que exigem essas competências.
+
+Seus traços mais pronunciados — ${top3.join(', ')} — formam uma combinação que se complementa, permitindo que você aborde desafios de múltiplas perspectivas. Esta configuração cognitiva é particularmente valiosa em contextos que exigem tanto profundidade de análise quanto capacidade de adaptação.
+
+As áreas de ${lowest.join(' e ').toLowerCase()} representam oportunidades de crescimento. Desenvolver essas dimensões pode ampliar significativamente sua versatilidade cognitiva e abrir novas possibilidades em sua vida pessoal e profissional.
+
+Seu perfil sugere que você se beneficia de ambientes que valorizam ${top3.includes('Raciocínio analítico') || top3.includes('Pensamento estratégico') ? 'pensamento estruturado e análise fundamentada' : top3.includes('Criatividade cognitiva') || top3.includes('Flexibilidade mental') ? 'inovação, criatividade e adaptabilidade' : 'aprendizado contínuo e desenvolvimento intelectual'}. Buscar oportunidades alinhadas com essas tendências pode potencializar significativamente sua satisfação e desempenho.
+
+Este relatório representa uma fotografia do seu perfil cognitivo no momento atual. O cérebro humano é altamente adaptável, e com estímulo adequado, todas as dimensões analisadas podem ser desenvolvidas ao longo do tempo.`;
+}
+
+// ======================== MAIN FUNCTION ========================
 
 export function calculateScore(
   quizSlug: string,
@@ -94,207 +330,101 @@ export function calculateScore(
   maxPossible: number
 ): ScoreResult {
   const totalScore = responses.reduce((sum, r) => sum + r.score_value, 0);
-  const percentage = maxPossible > 0 ? (totalScore / maxPossible) * 100 : 0;
 
-  switch (quizSlug) {
-    case 'perfil-de-raciocinio':
-      return generateCognitiveProfileResult(totalScore, maxPossible, responses);
-    case 'cerebro-acima-da-media':
-      return generateCognitiveResult(totalScore, maxPossible, percentage);
-    case 'personalidade-profunda':
-      return generatePersonalityResult(totalScore, maxPossible, percentage, responses);
-    case 'indicadores-de-tdah':
-      return generateTDAHResult(totalScore, maxPossible, percentage);
-    case 'perfil-psicologico-completo':
-      return generatePsychologicalResult(totalScore, maxPossible, percentage, responses);
-    default:
-      return generateGenericResult(totalScore, maxPossible, percentage);
+  const quizConfig = QUIZ_TRAITS[quizSlug];
+  if (!quizConfig) {
+    return generateGenericResult(quizSlug, responses, totalScore, maxPossible);
   }
-}
 
-function generateCognitiveProfileResult(total: number, max: number, responses: { score_value: number }[]): ScoreResult {
-  const traitScores = computeTraitScores(responses);
-  const primaryProfile = determinePrimaryProfile(traitScores);
-  const consistency = computeConsistency(responses);
-  const percentile = Math.min(99, Math.max(10, Math.round(35 + (total / Math.max(max, 1)) * 55 + (consistency - 5) * 2)));
+  const traitLevels = computeTraitLevels(responses, quizConfig.traits);
+  const profile = pickProfile(traitLevels, quizConfig.profiles);
+  const percentile = generatePercentile(traitLevels);
 
-  // Top 3 traits
-  const sortedTraits = Object.entries(traitScores).sort((a, b) => b[1].pct - a[1].pct);
-  const topTraits = sortedTraits.slice(0, 3);
-  const bottomTraits = sortedTraits.slice(-2);
+  const isTDAH = quizSlug === 'indicadores-de-tdah';
+  const disclaimer = isTDAH
+    ? 'IMPORTANTE: Este teste é apenas informativo e NÃO fornece diagnóstico de TDAH. O diagnóstico só pode ser feito por profissionais qualificados de saúde mental. Se você se identificou com os resultados, procure um psicólogo ou psiquiatra para uma avaliação completa.'
+    : 'Este teste é apenas para fins informativos e educacionais. Ele não constitui diagnóstico médico, psicológico ou psiquiátrico e não substitui avaliação profissional.';
 
-  const summaryParts: string[] = [];
-  if (topTraits[0][1].pct >= 70) summaryParts.push(`tendência forte a ${TRAIT_LABELS[topTraits[0][0]].toLowerCase()}`);
-  else summaryParts.push(`tendência a ${TRAIT_LABELS[topTraits[0][0]].toLowerCase()}`);
-  summaryParts.push(`${TRAIT_LABELS[topTraits[1][0]].toLowerCase()}`);
+  const sections: ReportSection[] = [
+    {
+      title: 'Perfil Predominante',
+      content: profile.desc,
+      type: 'text',
+    },
+    {
+      title: 'Mapa de Traços Cognitivos',
+      content: 'Distribuição dos seus traços cognitivos identificados a partir das suas respostas.',
+      type: 'traits',
+      traits: Object.entries(traitLevels).map(([name, level]) => ({ name, level })),
+    },
+    {
+      title: 'Estilo de Pensamento',
+      content: getThinkingStyle(traitLevels),
+      type: 'text',
+    },
+    {
+      title: 'Potenciais Identificados',
+      content: 'Com base na análise das suas respostas, os seguintes potenciais foram identificados:',
+      type: 'list',
+      items: getPotentials(traitLevels),
+    },
+    {
+      title: 'Como Esse Perfil Aparece na Vida Real',
+      content: getRealLifeText(profile.name, traitLevels),
+      type: 'text',
+    },
+    {
+      title: 'Pontos Fortes',
+      content: 'Características positivas mais marcantes do seu perfil:',
+      type: 'list',
+      items: getStrengths(traitLevels),
+    },
+    {
+      title: 'Áreas de Desenvolvimento',
+      content: 'Sugestões construtivas para expandir suas capacidades cognitivas:',
+      type: 'list',
+      items: getDevelopmentAreas(traitLevels),
+    },
+    {
+      title: 'Estilo de Resolução de Problemas',
+      content: 'Análise do seu estilo predominante de resolução de problemas:',
+      type: 'styles',
+      styles: getProblemSolvingStyles(traitLevels),
+    },
+    {
+      title: 'Comparação com Outros Participantes',
+      content: getComparisonText(percentile, profile.name),
+      type: 'text',
+    },
+    {
+      title: 'Ambientes Onde Esse Perfil se Destaca',
+      content: 'Contextos e situações onde seu perfil tende a brilhar:',
+      type: 'environments',
+      items: getEnvironments(traitLevels),
+    },
+    {
+      title: 'Estilo de Aprendizado',
+      content: 'Mapeamento do seu estilo de aprendizado predominante:',
+      type: 'styles',
+      styles: getLearningStyles(traitLevels),
+    },
+    {
+      title: 'Interpretação Final',
+      content: getFinalInterpretation(profile.name, traitLevels, quizSlug),
+      type: 'text',
+    },
+  ];
 
   return {
-    totalScore: total,
-    maxScore: max,
+    totalScore,
+    maxScore: maxPossible,
     percentile,
-    resultTitle: primaryProfile,
-    resultSummary: `Suas respostas indicam ${summaryParts.join(' e ')}, com estilo de tomada de decisão ${traitScores['logica_vs_intuicao'].pct >= 60 ? 'mais lógico' : 'equilibrado entre lógica e intuição'}.`,
-    fullReport: {
-      sections: [
-        {
-          title: 'Perfil Predominante',
-          content: `Seu perfil cognitivo predominante é ${primaryProfile}. Isso indica que você tende a processar informações de forma ${primaryProfile.includes('Analítico') ? 'metódica e estruturada' : primaryProfile.includes('Flexível') ? 'adaptável e estratégica' : primaryProfile.includes('Objetivo') ? 'direta e prática' : 'observadora e detalhista'}.`,
-        },
-        {
-          title: 'Consistência do Perfil',
-          content: `Sua consistência de respostas é ${consistency}/10. ${consistency >= 7 ? 'Isso indica um padrão de pensamento bem definido e estável.' : consistency >= 5 ? 'Seu perfil mostra versatilidade, alternando entre estilos dependendo do contexto.' : 'Você demonstra grande flexibilidade cognitiva, com variações significativas em seu estilo de pensamento.'}`,
-          score: consistency,
-          maxScore: 10,
-        },
-        ...topTraits.map(([key, val]) => ({
-          title: TRAIT_LABELS[key],
-          content: `${val.pct >= 80 ? 'Pontuação muito alta' : val.pct >= 60 ? 'Pontuação alta' : val.pct >= 40 ? 'Pontuação moderada' : 'Pontuação baixa'}. ${getTraitDescription(key, val.pct)}`,
-          score: val.score,
-          maxScore: val.max,
-        })),
-        ...bottomTraits.map(([key, val]) => ({
-          title: TRAIT_LABELS[key],
-          content: `${val.pct >= 60 ? 'Pontuação adequada' : 'Área com potencial de desenvolvimento'}. ${getTraitDescription(key, val.pct)}`,
-          score: val.score,
-          maxScore: val.max,
-        })),
-        {
-          title: 'Comparação com Outros Participantes',
-          content: `Seu perfil mostrou maior consistência analítica do que ${percentile}% dos participantes que fizeram este teste.`,
-          score: percentile,
-          maxScore: 100,
-        },
-        {
-          title: 'Análise Integrada',
-          content: `Pessoas com perfil ${primaryProfile} tendem a se destacar em atividades que exigem ${primaryProfile.includes('Analítico') ? 'análise de dados, resolução de problemas complexos e pensamento estratégico' : primaryProfile.includes('Estruturado') ? 'planejamento detalhado, organização e controle de qualidade' : primaryProfile.includes('Flexível') ? 'adaptação rápida, inovação e gestão de mudanças' : primaryProfile.includes('Objetivo') ? 'execução ágil, pragmatismo e tomada de decisão rápida' : 'observação atenta, pesquisa e análise qualitativa'}. Seu estilo cognitivo pode ser um diferencial em ambientes que valorizam ${traitScores['logica_vs_intuicao'].pct >= 60 ? 'raciocínio lógico e objetividade' : 'equilíbrio entre análise e intuição'}.`,
-        },
-      ],
-      disclaimer: 'Este teste é apenas para fins informativos e educacionais. Ele não constitui diagnóstico médico, psicológico ou psiquiátrico e não substitui avaliação profissional.',
-    },
+    resultTitle: profile.name,
+    resultSummary: profile.desc.split('.').slice(0, 2).join('.') + '.',
+    fullReport: { sections, disclaimer },
   };
 }
 
-function getTraitDescription(trait: string, pct: number): string {
-  const high = pct >= 60;
-  const descriptions: Record<string, [string, string]> = {
-    'raciocinio_analitico': ['Você demonstra forte capacidade de decompor problemas e analisar situações de forma lógica.', 'Há espaço para desenvolver mais a análise sistemática de problemas.'],
-    'praticidade': ['Você tende a buscar soluções objetivas e aplicáveis.', 'Você pode se beneficiar de abordagens mais práticas e diretas.'],
-    'flexibilidade_mental': ['Você se adapta bem a mudanças e novas perspectivas.', 'Você pode preferir estabilidade e consistência em seus métodos.'],
-    'impulsividade_decisoria': ['Você tende a decidir com agilidade quando se sente preparado.', 'Você tende a ponderar mais antes de tomar decisões.'],
-    'atencao_detalhes': ['Você possui aguçada percepção de detalhes e padrões.', 'Você tende a focar mais no panorama geral do que em detalhes específicos.'],
-    'organizacao_pensamento': ['Seu pensamento tende a ser organizado e estruturado.', 'Você pode se beneficiar de mais estrutura na organização de ideias.'],
-    'velocidade_decisao': ['Você tende a processar informações e decidir com rapidez.', 'Você prefere dedicar mais tempo à análise antes de decidir.'],
-    'preferencia_estrutura': ['Você funciona melhor com clareza, ordem e estrutura.', 'Você lida bem com ambiguidade e situações menos estruturadas.'],
-    'adaptacao_novas_info': ['Você integra novas informações com facilidade ao seu raciocínio.', 'Você pode levar mais tempo para ajustar suas opiniões com base em novos dados.'],
-    'logica_vs_intuicao': ['Você privilegia argumentos lógicos e racionais.', 'Você equilibra lógica e intuição em suas decisões.'],
-  };
-  return (descriptions[trait] || ['', ''])[high ? 0 : 1];
-}
-
-// ============= Existing functions for other quizzes =============
-
-function generateCognitiveResult(total: number, max: number, pct: number): ScoreResult {
-  const percentile = Math.min(99, Math.round(pct * 0.95 + 5));
-  let title: string, summary: string;
-  if (pct >= 87) { title = 'Desempenho Excepcional'; summary = `Seu raciocínio demonstra capacidade analítica muito acima da média.`; }
-  else if (pct >= 68) { title = 'Acima da Média'; summary = `Você apresenta habilidades de raciocínio lógico superiores à maioria.`; }
-  else if (pct >= 43) { title = 'Na Média'; summary = `Seu desempenho está dentro da faixa esperada para a população geral.`; }
-  else { title = 'Abaixo da Média'; summary = `Algumas áreas podem se beneficiar de estímulo e prática.`; }
-
-  return {
-    totalScore: total, maxScore: max, percentile, resultTitle: title, resultSummary: summary,
-    fullReport: {
-      sections: [
-        { title: 'Pontuação Geral', content: `Você acertou ${total} de ${max} questões (${Math.round(pct)}%).`, score: total, maxScore: max },
-        { title: 'Raciocínio Lógico', content: pct >= 68 ? 'Você demonstrou excelente capacidade de identificar padrões e sequências.' : 'Há oportunidades para desenvolver sua capacidade de reconhecimento de padrões.' },
-        { title: 'Raciocínio Verbal', content: pct >= 68 ? 'Suas habilidades verbais e de analogia estão bem desenvolvidas.' : 'Exercícios de vocabulário e analogias podem fortalecer essa área.' },
-        { title: 'Comparação com Outros Participantes', content: `Você pontuou acima de ${percentile}% dos participantes.`, score: percentile, maxScore: 100 },
-      ],
-      disclaimer: 'Este teste é apenas para fins informativos e educacionais. Ele não constitui diagnóstico médico, psicológico ou psiquiátrico e não substitui avaliação profissional.',
-    },
-  };
-}
-
-function generatePersonalityResult(total: number, max: number, pct: number, responses: { score_value: number }[]): ScoreResult {
-  const introversion = (responses[0]?.score_value || 3) + (5 - (responses[2]?.score_value || 3));
-  const analytical = (responses[1]?.score_value || 3) + (responses[6]?.score_value || 3);
-  const structured = (responses[4]?.score_value || 3) + (responses[11]?.score_value || 3);
-  const selfAware = (responses[8]?.score_value || 3) + (responses[15]?.score_value || 3);
-
-  const traits: string[] = [];
-  if (introversion > 6) traits.push('Introspectivo'); else traits.push('Expansivo');
-  if (analytical > 6) traits.push('Analítico'); else traits.push('Intuitivo');
-  if (structured > 6) traits.push('Estruturado'); else traits.push('Flexível');
-
-  const title = traits.join(' • ');
-  const percentile = Math.min(99, Math.round(45 + Math.random() * 40));
-
-  return {
-    totalScore: total, maxScore: max, percentile, resultTitle: title,
-    resultSummary: `Seu perfil predominante é ${traits[0].toLowerCase()} e ${traits[1].toLowerCase()}.`,
-    fullReport: {
-      sections: [
-        { title: 'Perfil Predominante', content: `Seu perfil combina traços de ${traits.join(', ').toLowerCase()}.` },
-        { title: 'Introversão vs Extroversão', content: introversion > 6 ? 'Você recarrega energias em solidão.' : 'Você se energiza em ambientes sociais.', score: introversion, maxScore: 10 },
-        { title: 'Pensamento Analítico', content: analytical > 6 ? 'Você processa informações de forma lógica.' : 'Você confia mais na intuição.', score: analytical, maxScore: 10 },
-        { title: 'Estrutura e Organização', content: structured > 6 ? 'Você valoriza planejamento.' : 'Você se adapta bem a mudanças.', score: structured, maxScore: 10 },
-        { title: 'Autopercepção', content: selfAware > 6 ? 'Alta capacidade de autorreflexão.' : 'Há espaço para mais autoconhecimento.', score: selfAware, maxScore: 10 },
-      ],
-      disclaimer: 'Este teste é apenas para fins informativos e educacionais. Ele não constitui diagnóstico médico, psicológico ou psiquiátrico e não substitui avaliação profissional.',
-    },
-  };
-}
-
-function generateTDAHResult(total: number, max: number, pct: number): ScoreResult {
-  const percentile = Math.min(99, Math.round(pct));
-  let title: string, summary: string;
-  if (pct >= 75) { title = 'Indicadores Elevados'; summary = 'Nível elevado de sinais comportamentais associados à desatenção e/ou hiperatividade.'; }
-  else if (pct >= 50) { title = 'Indicadores Moderados'; summary = 'Presença moderada de comportamentos associados a padrões de desatenção.'; }
-  else if (pct >= 25) { title = 'Indicadores Leves'; summary = 'Poucos sinais comportamentais, mas alguns padrões merecem atenção.'; }
-  else { title = 'Poucos Indicadores'; summary = 'Não há presença significativa de padrões associados à desatenção ou hiperatividade.'; }
-
-  return {
-    totalScore: total, maxScore: max, percentile, resultTitle: title, resultSummary: summary,
-    fullReport: {
-      sections: [
-        { title: 'Resultado Geral', content: `Pontuação: ${total} de ${max} (${Math.round(pct)}%). ${summary}`, score: total, maxScore: max },
-        { title: 'Desatenção', content: 'Análise dos indicadores de desatenção.' },
-        { title: 'Hiperatividade/Impulsividade', content: 'Análise dos indicadores de inquietação e impulsividade.' },
-        { title: 'Recomendações', content: 'Se os indicadores foram moderados ou elevados, busque avaliação profissional.' },
-      ],
-      disclaimer: 'IMPORTANTE: Este teste NÃO fornece diagnóstico de TDAH. O diagnóstico só pode ser feito por profissionais qualificados.',
-    },
-  };
-}
-
-function generatePsychologicalResult(total: number, max: number, pct: number, responses: { score_value: number }[]): ScoreResult {
-  const emotionalStability = ((responses[0]?.score_value || 3) + (responses[1]?.score_value || 3)) / 2;
-  const organization = ((responses[5]?.score_value || 3) + (responses[14]?.score_value || 3)) / 2;
-  const percentile = Math.min(99, Math.round(40 + Math.random() * 45));
-  const title = emotionalStability > 3.5 ? 'Perfil Estável e Analítico' : 'Perfil Sensível e Adaptável';
-
-  return {
-    totalScore: total, maxScore: max, percentile, resultTitle: title,
-    resultSummary: `Seu perfil apresenta ${emotionalStability > 3.5 ? 'boa estabilidade emocional' : 'sensibilidade emocional acentuada'}.`,
-    fullReport: {
-      sections: [
-        { title: 'Visão Geral', content: 'Análise integrada do seu perfil psicológico.' },
-        { title: 'Estabilidade Emocional', content: emotionalStability > 3.5 ? 'Boa regulação emocional.' : 'Mais reativo emocionalmente.', score: Math.round(emotionalStability * 20), maxScore: 100 },
-        { title: 'Organização', content: organization > 3.5 ? 'Disciplina e foco.' : 'Mais espontâneo.', score: Math.round(organization * 20), maxScore: 100 },
-      ],
-      disclaimer: 'Este teste é apenas para fins informativos e educacionais. Ele não constitui diagnóstico médico, psicológico ou psiquiátrico e não substitui avaliação profissional.',
-    },
-  };
-}
-
-function generateGenericResult(total: number, max: number, pct: number): ScoreResult {
-  return {
-    totalScore: total, maxScore: max, percentile: Math.round(pct),
-    resultTitle: pct >= 70 ? 'Resultado Positivo' : 'Resultado na Média',
-    resultSummary: `Você pontuou ${total} de ${max} (${Math.round(pct)}%).`,
-    fullReport: {
-      sections: [{ title: 'Resultado', content: `Pontuação: ${total}/${max}`, score: total, maxScore: max }],
-      disclaimer: 'Este teste é apenas para fins informativos e educacionais.',
-    },
-  };
+function generateGenericResult(slug: string, responses: { score_value: number }[], total: number, max: number): ScoreResult {
+  return calculateScore('perfil-de-raciocinio', responses, max);
 }
