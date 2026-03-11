@@ -213,7 +213,7 @@ export default function QuizResult() {
 
                     <div className="text-center space-y-4">
                       <div>
-                        <div className="text-4xl font-display font-extrabold text-gradient">R$ 7,90</div>
+                        <div className="text-3xl md:text-4xl font-display font-extrabold text-gradient">R$ 7,90</div>
                         <p className="text-xs text-muted-foreground mt-1">Pagamento único • Acesso imediato</p>
                       </div>
                       <Button
