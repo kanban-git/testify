@@ -13,12 +13,12 @@ export function useMetrics() {
     metadata?: Record<string, unknown>
   ) => {
     try {
-      await supabase.from('metrics_events').insert({
+      await (supabase.from('metrics_events').insert as any)({
         event_type: eventType,
         quiz_id: quizId || null,
         session_id: sessionId || null,
         metadata: metadata || null,
-      } as Record<string, unknown>);
+      });
     } catch (e) {
       console.error('Failed to track event:', e);
     }
