@@ -19,6 +19,15 @@ interface Result {
   result_title: string; result_summary: string; full_report: any; unlocked: boolean;
 }
 
+function getIQClassification(iq: number): string {
+  if (iq >= 140) return 'Gênio ou quase gênio';
+  if (iq >= 130) return 'Superdotado';
+  if (iq >= 120) return 'Inteligência superior';
+  if (iq >= 110) return 'Inteligência acima da média';
+  if (iq >= 90) return 'Inteligência normal';
+  return 'Inteligência abaixo da média';
+}
+
 export default function QuizResult() {
   const { slug } = useParams<{ slug: string }>();
   const location = useLocation();
@@ -94,8 +103,10 @@ export default function QuizResult() {
   if (loading) return <div className="min-h-screen flex items-center justify-center"><div className="h-8 w-8 border-4 border-primary border-t-transparent rounded-full animate-spin" /></div>;
   if (!result) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Resultado não encontrado.</div>;
 
+  const isIQTest = slug === 'teste-de-qi';
   const isTDAH = slug === 'indicadores-de-tdah';
-  const report = result.full_report as { sections: any[]; disclaimer: string } | null;
+  const report = result.full_report as { sections: any[]; disclaimer: string; iqScore?: number } | null;
+  const iqScore = report?.iqScore;
 
   const previewSections = report?.sections?.filter(s =>
     s.title !== 'Perfil Predominante' && s.type !== 'traits'
@@ -116,6 +127,19 @@ export default function QuizResult() {
             >
               <Brain className="h-10 w-10 text-primary-foreground" />
             </motion.div>
+
+            {isIQTest && iqScore ? (
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.4, type: 'spring', stiffness: 150 }}
+                className="space-y-2"
+              >
+                <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Seu QI estimado</p>
+                <div className="text-7xl md:text-8xl font-display font-black text-gradient">{iqScore}</div>
+                <p className="text-lg font-semibold text-muted-foreground">{getIQClassification(iqScore)}</p>
+              </motion.div>
+            ) : null}
 
             <div className="space-y-3">
               <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Sua análise está pronta</p>

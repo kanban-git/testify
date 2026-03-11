@@ -5,11 +5,13 @@ export interface ScoreResult {
   resultTitle: string;
   resultSummary: string;
   fullReport: FullReport;
+  iqScore?: number;
 }
 
 export interface FullReport {
   sections: ReportSection[];
   disclaimer: string;
+  iqScore?: number;
 }
 
 export interface ReportSection {
@@ -24,7 +26,7 @@ export interface ReportSection {
 // ======================== TRAIT MAPS (question index → trait) ========================
 
 const QUIZ_TRAITS: Record<string, { traits: Record<string, number[]>; profiles: { traits: string[]; name: string; desc: string }[] }> = {
-  'perfil-de-raciocinio': {
+  'teste-de-qi': {
     traits: {
       'Raciocínio analítico': [0, 7, 19],
       'Pensamento estratégico': [4, 2, 17],
@@ -415,16 +417,26 @@ export function calculateScore(
     },
   ];
 
+  // Calculate IQ score for teste-de-qi
+  let iqScore: number | undefined;
+  if (quizSlug === 'teste-de-qi') {
+    const avg = Object.values(traitLevels).reduce((s, v) => s + v, 0) / Object.values(traitLevels).length;
+    // Map avg (20-100) to IQ range (85-145) with slight randomness
+    iqScore = Math.round(avg * 0.75 + 55 + (Math.random() * 6 - 3));
+    iqScore = Math.min(148, Math.max(85, iqScore));
+  }
+
   return {
     totalScore,
     maxScore: maxPossible,
     percentile,
     resultTitle: profile.name,
     resultSummary: profile.desc.split('.').slice(0, 2).join('.') + '.',
-    fullReport: { sections, disclaimer },
+    fullReport: { sections, disclaimer, iqScore },
+    iqScore,
   };
 }
 
 function generateGenericResult(slug: string, responses: { score_value: number }[], total: number, max: number): ScoreResult {
-  return calculateScore('perfil-de-raciocinio', responses, max);
+  return calculateScore('teste-de-qi', responses, max);
 }
