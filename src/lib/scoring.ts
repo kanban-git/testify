@@ -416,13 +416,23 @@ export function calculateScore(
     },
   ];
 
+  // Calculate IQ score for teste-de-qi
+  let iqScore: number | undefined;
+  if (quizSlug === 'teste-de-qi') {
+    const avg = Object.values(traitLevels).reduce((s, v) => s + v, 0) / Object.values(traitLevels).length;
+    // Map avg (20-100) to IQ range (85-145) with slight randomness
+    iqScore = Math.round(avg * 0.75 + 55 + (Math.random() * 6 - 3));
+    iqScore = Math.min(148, Math.max(85, iqScore));
+  }
+
   return {
     totalScore,
     maxScore: maxPossible,
     percentile,
     resultTitle: profile.name,
     resultSummary: profile.desc.split('.').slice(0, 2).join('.') + '.',
-    fullReport: { sections, disclaimer },
+    fullReport: { sections, disclaimer, iqScore },
+    iqScore,
   };
 }
 
