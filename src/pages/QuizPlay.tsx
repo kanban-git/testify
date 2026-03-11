@@ -6,7 +6,8 @@ import { useMetrics } from '@/hooks/useMetrics';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, ChevronRight } from 'lucide-react';
+import { Brain, ChevronRight, MessageSquare, ArrowRight } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Question {
   id: string; question_text: string; question_type: string; question_order: number;
