@@ -100,7 +100,6 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify({
       init_point: initPoint,
       preference_id: mpData.id,
-      sandbox: isSandbox,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
