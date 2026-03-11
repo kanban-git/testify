@@ -115,8 +115,8 @@ export default function QuizResult() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 py-10 md:py-20">
-        <div className="container max-w-2xl mx-auto space-y-8">
+      <main className="flex-1 py-6 md:py-20 px-4 md:px-0">
+        <div className="container max-w-2xl mx-auto space-y-6 md:space-y-8">
           {/* Preliminary Result */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-6">
             <motion.div
@@ -136,7 +136,7 @@ export default function QuizResult() {
                 className="space-y-2"
               >
                 <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Seu QI estimado</p>
-                <div className="text-7xl md:text-8xl font-display font-black text-gradient">{iqScore}</div>
+                <div className="text-6xl md:text-8xl font-display font-black text-gradient">{iqScore}</div>
                 <p className="text-lg font-semibold text-muted-foreground">{getIQClassification(iqScore)}</p>
               </motion.div>
             ) : null}
@@ -144,8 +144,8 @@ export default function QuizResult() {
             <div className="space-y-3">
               <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Sua análise está pronta</p>
               <p className="text-base text-muted-foreground">Perfil predominante:</p>
-              <h1 className="text-3xl md:text-5xl font-display font-extrabold">{result.result_title}</h1>
-              <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">{result.result_summary}</p>
+              <h1 className="text-2xl md:text-5xl font-display font-extrabold">{result.result_title}</h1>
+              <p className="text-base text-muted-foreground max-w-lg mx-auto leading-relaxed px-2">{result.result_summary}</p>
             </div>
 
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-6 py-2.5 font-semibold text-sm border border-primary/20">
@@ -172,7 +172,7 @@ export default function QuizResult() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                 <Card className="rounded-2xl border-primary/20 overflow-hidden">
                   <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
-                  <CardContent className="pt-8 pb-8 space-y-8">
+                  <CardContent className="pt-6 pb-6 px-4 md:pt-8 md:pb-8 md:px-6 space-y-6 md:space-y-8">
                     <div className="text-center space-y-3">
                       <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
                         <Lock className="h-7 w-7 text-primary" />
@@ -213,7 +213,7 @@ export default function QuizResult() {
 
                     <div className="text-center space-y-4">
                       <div>
-                        <div className="text-4xl font-display font-extrabold text-gradient">R$ 7,90</div>
+                        <div className="text-3xl md:text-4xl font-display font-extrabold text-gradient">R$ 7,90</div>
                         <p className="text-xs text-muted-foreground mt-1">Pagamento único • Acesso imediato</p>
                       </div>
                       <Button

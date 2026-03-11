@@ -6,7 +6,8 @@ import { useMetrics } from '@/hooks/useMetrics';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Brain, ChevronRight } from 'lucide-react';
+import { Brain, ChevronRight, MessageSquare, ArrowRight } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface Question {
   id: string; question_text: string; question_type: string; question_order: number;
@@ -34,6 +35,8 @@ export default function QuizPlay() {
   const [loading, setLoading] = useState(true);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [motivation, setMotivation] = useState('');
+  const [motivationSubmitted, setMotivationSubmitted] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
@@ -127,48 +130,83 @@ export default function QuizPlay() {
         </div>
       </div>
 
-      {/* Question */}
-      <div className="flex-1 flex items-center justify-center p-6">
+      {/* Motivation or Questions */}
+      <div className="flex-1 flex items-center justify-center p-4 md:p-6">
         <div className="w-full max-w-xl">
-          <AnimatePresence mode="wait">
+          {!motivationSubmitted ? (
             <motion.div
-              key={currentIndex}
-              initial={{ opacity: 0, x: 40 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -40 }}
-              transition={{ duration: 0.3 }}
-              className="space-y-8"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
             >
-              <h2 className="text-xl md:text-2xl font-display font-bold text-center leading-relaxed">
-                {currentQuestion?.question_text}
-              </h2>
-
-              <div className="space-y-3">
-                {currentAnswers.map((answer, i) => {
-                  const isSelected = selectedAnswer === answer.id;
-                  return (
-                    <motion.button
-                      key={answer.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className={`w-full text-left rounded-xl p-4 border-2 transition-all duration-200 flex items-center gap-3 ${
-                        isSelected
-                          ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
-                          : 'border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5'
-                      }`}
-                      onClick={() => handleAnswer(answer)}
-                      disabled={isTransitioning}
-                    >
-                      <span className="text-lg">{answerEmojis[i] || '•'}</span>
-                      <span className="text-sm font-medium flex-1">{answer.answer_text}</span>
-                      {isSelected && <ChevronRight className="h-4 w-4 text-primary" />}
-                    </motion.button>
-                  );
-                })}
+              <div className="text-center space-y-3">
+                <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+                  <MessageSquare className="h-7 w-7 text-primary" />
+                </div>
+                <h2 className="text-xl md:text-2xl font-display font-bold">
+                  Antes de começar...
+                </h2>
+                <p className="text-sm text-muted-foreground max-w-md mx-auto">
+                  Conte brevemente o que te motivou a fazer este teste. Isso nos ajuda a entender melhor nossos participantes.
+                </p>
               </div>
+              <Textarea
+                placeholder="Ex: Quero entender melhor como minha mente funciona..."
+                value={motivation}
+                onChange={(e) => setMotivation(e.target.value)}
+                className="rounded-xl min-h-[100px] resize-none border-border/50 bg-card"
+              />
+              <Button
+                className="w-full rounded-xl py-6 font-display font-bold text-base"
+                onClick={() => setMotivationSubmitted(true)}
+              >
+                Começar teste <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+              <p className="text-xs text-muted-foreground text-center">
+                Este campo é opcional. Você pode pular clicando em "Começar teste".
+              </p>
             </motion.div>
-          </AnimatePresence>
+          ) : (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={currentIndex}
+                initial={{ opacity: 0, x: 40 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -40 }}
+                transition={{ duration: 0.3 }}
+                className="space-y-8"
+              >
+                <h2 className="text-xl md:text-2xl font-display font-bold text-center leading-relaxed">
+                  {currentQuestion?.question_text}
+                </h2>
+
+                <div className="space-y-3">
+                  {currentAnswers.map((answer, i) => {
+                    const isSelected = selectedAnswer === answer.id;
+                    return (
+                      <motion.button
+                        key={answer.id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className={`w-full text-left rounded-xl p-4 border-2 transition-all duration-200 flex items-center gap-3 ${
+                          isSelected
+                            ? 'border-primary bg-primary/10 shadow-lg shadow-primary/10'
+                            : 'border-border/50 bg-card hover:border-primary/40 hover:bg-primary/5'
+                        }`}
+                        onClick={() => handleAnswer(answer)}
+                        disabled={isTransitioning}
+                      >
+                        <span className="text-lg">{answerEmojis[i] || '•'}</span>
+                        <span className="text-sm font-medium flex-1">{answer.answer_text}</span>
+                        {isSelected && <ChevronRight className="h-4 w-4 text-primary" />}
+                      </motion.button>
+                    );
+                  })}
+                </div>
+              </motion.div>
+            </AnimatePresence>
+          )}
         </div>
       </div>
     </div>
