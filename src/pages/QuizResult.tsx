@@ -144,8 +144,8 @@ export default function QuizResult() {
             <div className="space-y-3">
               <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Sua análise está pronta</p>
               <p className="text-base text-muted-foreground">Perfil predominante:</p>
-              <h1 className="text-3xl md:text-5xl font-display font-extrabold">{result.result_title}</h1>
-              <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">{result.result_summary}</p>
+              <h1 className="text-2xl md:text-5xl font-display font-extrabold">{result.result_title}</h1>
+              <p className="text-base text-muted-foreground max-w-lg mx-auto leading-relaxed px-2">{result.result_summary}</p>
             </div>
 
             <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-6 py-2.5 font-semibold text-sm border border-primary/20">
