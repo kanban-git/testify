@@ -34,6 +34,8 @@ export default function QuizPlay() {
   const [loading, setLoading] = useState(true);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [motivation, setMotivation] = useState('');
+  const [motivationSubmitted, setMotivationSubmitted] = useState(false);
 
   useEffect(() => {
     if (!slug) return;
