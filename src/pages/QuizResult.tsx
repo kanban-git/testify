@@ -115,8 +115,8 @@ export default function QuizResult() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      <main className="flex-1 py-10 md:py-20">
-        <div className="container max-w-2xl mx-auto space-y-8">
+      <main className="flex-1 py-6 md:py-20 px-4 md:px-0">
+        <div className="container max-w-2xl mx-auto space-y-6 md:space-y-8">
           {/* Preliminary Result */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-6">
             <motion.div
