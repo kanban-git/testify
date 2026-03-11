@@ -172,7 +172,7 @@ export default function QuizResult() {
               <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}>
                 <Card className="rounded-2xl border-primary/20 overflow-hidden">
                   <div className="h-1.5 bg-gradient-to-r from-primary via-accent to-primary" />
-                  <CardContent className="pt-8 pb-8 space-y-8">
+                  <CardContent className="pt-6 pb-6 px-4 md:pt-8 md:pb-8 md:px-6 space-y-6 md:space-y-8">
                     <div className="text-center space-y-3">
                       <div className="h-14 w-14 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
                         <Lock className="h-7 w-7 text-primary" />
