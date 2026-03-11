@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { supabase } from '@/integrations/supabase/client';
-import { useQuizSession } from '@/hooks/useQuizSession';
 import { useMetrics } from '@/hooks/useMetrics';
 import { motion } from 'framer-motion';
 import { CheckCircle, XCircle, Clock } from 'lucide-react';
@@ -10,45 +9,53 @@ import { Button } from '@/components/ui/button';
 export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const { unlockResult } = useQuizSession();
   const { trackEvent } = useMetrics();
   const [status, setStatus] = useState<'processing' | 'approved' | 'failed' | 'pending'>('processing');
 
-  const paymentStatus = searchParams.get('status');
   const sessionId = searchParams.get('session_id');
   const quizId = searchParams.get('quiz_id');
 
   useEffect(() => {
-    if (!sessionId || !paymentStatus) {
+    if (!sessionId) {
       navigate('/');
       return;
     }
 
-    (async () => {
-      if (paymentStatus === 'approved') {
-        // Update payment status
-        await (supabase.from('payments').update as any)({ status: 'approved' })
-          .eq('session_id', sessionId);
-        
-        await (supabase.from('quiz_sessions').update as any)({ 
-          payment_status: 'approved',
-          payment_provider: 'mercadopago',
-          amount_paid: 7.90,
-        }).eq('id', sessionId);
+    // Server-side verification — never trust URL params for payment status
+    const verifyPayment = async () => {
+      try {
+        const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+        const res = await fetch(`https://${projectId}.supabase.co/functions/v1/mercadopago-verify`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          },
+          body: JSON.stringify({ session_id: sessionId }),
+        });
 
-        await unlockResult(sessionId);
-        trackEvent('payment_approved', quizId || '', sessionId);
-        trackEvent('report_unlocked', quizId || '', sessionId);
-        setStatus('approved');
-      } else if (paymentStatus === 'pending') {
-        setStatus('pending');
-      } else {
+        const data = await res.json();
+
+        if (data.approved) {
+          trackEvent('payment_approved', quizId || '', sessionId);
+          trackEvent('report_unlocked', quizId || '', sessionId);
+          setStatus('approved');
+        } else if (data.status === 'pending') {
+          setStatus('pending');
+        } else {
+          setStatus('failed');
+        }
+      } catch (err) {
+        console.error('Payment verification error:', err);
         setStatus('failed');
       }
-    })();
-  }, [paymentStatus, sessionId]);
+    };
 
-  // Find quiz slug to redirect
+    // Small delay to allow MP to process
+    const timer = setTimeout(verifyPayment, 2000);
+    return () => clearTimeout(timer);
+  }, [sessionId]);
+
   const handleViewReport = async () => {
     if (!quizId) { navigate('/'); return; }
     const { data } = await supabase.from('quizzes').select('slug').eq('id', quizId).single();
@@ -66,7 +73,8 @@ export default function PaymentCallback() {
         {status === 'processing' && (
           <>
             <div className="h-12 w-12 mx-auto border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <h2 className="text-xl font-display font-bold">Processando pagamento...</h2>
+            <h2 className="text-xl font-display font-bold">Verificando pagamento...</h2>
+            <p className="text-sm text-muted-foreground">Aguarde enquanto confirmamos seu pagamento com o Mercado Pago.</p>
           </>
         )}
         {status === 'approved' && (
