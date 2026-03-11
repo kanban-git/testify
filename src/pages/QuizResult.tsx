@@ -9,10 +9,9 @@ import DisclaimerBanner from '@/components/DisclaimerBanner';
 import UnlockedReport from '@/components/UnlockedReport';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle, Mail, Star, Users, ArrowRight, Shield, CreditCard } from 'lucide-react';
+import { Lock, CheckCircle, Mail, Star, Users, ArrowRight, Shield, CreditCard, Brain, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Result {
@@ -71,7 +70,6 @@ export default function QuizResult() {
       const data = await res.json();
 
       if (data.init_point) {
-        // Redirect to Mercado Pago checkout
         window.location.href = data.init_point;
       } else if (data.error) {
         toast.error('Erro ao iniciar pagamento. Tente novamente.');
@@ -97,77 +95,45 @@ export default function QuizResult() {
   if (!result) return <div className="min-h-screen flex items-center justify-center text-muted-foreground">Resultado não encontrado.</div>;
 
   const isTDAH = slug === 'indicadores-de-tdah';
-  const isCognitiveProfile = slug === 'perfil-de-raciocinio';
-  const report = result.full_report as { sections: { title: string; content: string; score?: number; maxScore?: number }[]; disclaimer: string } | null;
+  const report = result.full_report as { sections: any[]; disclaimer: string } | null;
 
-  // Find consistency score from report for cognitive profile
-  const consistencySection = isCognitiveProfile ? report?.sections.find(s => s.title === 'Consistência do Perfil') : null;
+  // Extract some blurred preview sections for paywall
+  const previewSections = report?.sections?.filter(s => 
+    s.title !== 'Perfil Predominante' && s.type !== 'traits'
+  ).slice(0, 3) || [];
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
       <main className="flex-1 py-8 md:py-16">
         <div className="container max-w-2xl mx-auto space-y-8">
-          {/* Preliminary Result */}
+          {/* Preliminary Result - always visible */}
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4">
-            <p className="text-sm font-medium text-primary uppercase tracking-wider">Seu resultado preliminar está pronto</p>
+            <p className="text-sm font-medium text-primary uppercase tracking-wider">Sua análise está pronta</p>
             
-            {isCognitiveProfile ? (
-              <>
-                <p className="text-base text-muted-foreground">Perfil predominante:</p>
-                <h1 className="text-3xl md:text-4xl font-display font-bold">{result.result_title}</h1>
-                <p className="text-lg text-muted-foreground max-w-lg mx-auto">{result.result_summary}</p>
-                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-5 py-2 font-semibold text-sm">
-                  <Users className="h-4 w-4" />
-                  Seu perfil mostrou maior consistência analítica do que {result.percentile}% dos participantes
-                </div>
-                {consistencySection && (
-                  <div className="pt-2">
-                    <Card>
-                      <CardContent className="pt-6">
-                        <div className="flex justify-between text-sm mb-2">
-                          <span>Consistência do perfil</span>
-                          <span className="font-semibold">{consistencySection.score}/{consistencySection.maxScore}</span>
-                        </div>
-                        <Progress value={((consistencySection.score || 0) / Math.max(consistencySection.maxScore || 10, 1)) * 100} className="h-3" />
-                      </CardContent>
-                    </Card>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <h1 className="text-3xl md:text-4xl font-display font-bold">{result.result_title}</h1>
-                <p className="text-lg text-muted-foreground">{result.result_summary}</p>
-                <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-5 py-2 font-semibold">
-                  <Users className="h-4 w-4" />
-                  Você pontuou acima de {result.percentile}% dos participantes
-                </div>
-                <Card>
-                  <CardContent className="pt-6">
-                    <div className="flex justify-between text-sm mb-2">
-                      <span>Pontuação</span>
-                      <span className="font-semibold">{result.total_score}/{result.max_score}</span>
-                    </div>
-                    <Progress value={(result.total_score / Math.max(result.max_score, 1)) * 100} className="h-3" />
-                  </CardContent>
-                </Card>
-              </>
-            )}
+            <div className="h-16 w-16 mx-auto rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Brain className="h-8 w-8 text-primary" />
+            </div>
+
+            <p className="text-base text-muted-foreground">Perfil predominante:</p>
+            <h1 className="text-3xl md:text-4xl font-display font-bold">{result.result_title}</h1>
+            <p className="text-lg text-muted-foreground max-w-lg mx-auto leading-relaxed">{result.result_summary}</p>
+            
+            <div className="inline-flex items-center gap-2 bg-primary/10 text-primary rounded-full px-5 py-2 font-semibold text-sm">
+              <Users className="h-4 w-4" />
+              Seu perfil se destaca entre {result.percentile}% dos participantes
+            </div>
           </motion.div>
 
           {showPaywall ? (
             <>
               {/* Blurred report preview */}
-              {report && report.sections.slice(2, 5).map((section, i) => (
+              {previewSections.map((section: any, i: number) => (
                 <div key={i} className="blur-content select-none">
                   <Card>
                     <CardHeader><CardTitle className="text-base">{section.title}</CardTitle></CardHeader>
                     <CardContent>
-                      <p className="text-sm text-muted-foreground">{section.content}</p>
-                      {section.score !== undefined && (
-                        <Progress value={(section.score / Math.max(section.maxScore || 100, 1)) * 100} className="h-2 mt-3" />
-                      )}
+                      <p className="text-sm text-muted-foreground">{section.content?.substring(0, 200)}...</p>
                     </CardContent>
                   </Card>
                 </div>
@@ -185,14 +151,17 @@ export default function QuizResult() {
 
                     <ul className="space-y-3 text-sm">
                       {[
-                        'Pontuação detalhada por traço',
-                        'Interpretação do resultado',
-                        'Comparação com participantes',
-                        'Perfil cognitivo / psicológico',
-                        'Relatório personalizado',
+                        'Mapa completo de traços cognitivos',
+                        'Estilo de pensamento e resolução de problemas',
+                        'Potenciais identificados e pontos fortes',
+                        'Como seu perfil aparece na vida real',
+                        'Áreas de desenvolvimento personalizado',
+                        'Comparação com outros participantes',
+                        'Estilo de aprendizado',
+                        'Interpretação final detalhada',
                         'Envio do resultado por email',
                       ].map((item, i) => (
-                        <li key={i} className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-success shrink-0" />{item}</li>
+                        <li key={i} className="flex items-center gap-2"><CheckCircle className="h-4 w-4 text-[hsl(var(--success))] shrink-0" />{item}</li>
                       ))}
                     </ul>
 
@@ -205,7 +174,7 @@ export default function QuizResult() {
                         </div>
                       </form>
                     ) : (
-                      <p className="text-sm text-success flex items-center gap-1"><CheckCircle className="h-4 w-4" /> Email salvo com sucesso!</p>
+                      <p className="text-sm text-[hsl(var(--success))] flex items-center gap-1"><CheckCircle className="h-4 w-4" /> Email salvo com sucesso!</p>
                     )}
 
                     <div className="text-center space-y-3">
