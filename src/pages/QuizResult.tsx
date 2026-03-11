@@ -6,12 +6,13 @@ import { useMetrics } from '@/hooks/useMetrics';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import DisclaimerBanner from '@/components/DisclaimerBanner';
+import UnlockedReport from '@/components/UnlockedReport';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Input } from '@/components/ui/input';
 import { motion } from 'framer-motion';
-import { Lock, CheckCircle, Mail, Star, BarChart3, FileText, Users, ArrowRight, Shield, CreditCard } from 'lucide-react';
+import { Lock, CheckCircle, Mail, Star, Users, ArrowRight, Shield, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Result {
