@@ -41,7 +41,21 @@ Deno.serve(async (req) => {
     );
     const payments = await paymentRes.json();
 
-    if (!payments || payments.length === 0) {
+    if (!Array.isArray(payments) || payments.length === 0) {
+      // No payment record yet — check if there's a payment on MP side directly
+      const searchRes = await fetch(
+        `https://api.mercadopago.com/v1/payments/search?external_reference=${session_id}&sort=date_created&criteria=desc`,
+        { headers: { 'Authorization': `Bearer ${accessToken}` } }
+      );
+      const searchData = await searchRes.json();
+
+      if (searchData?.results?.length > 0) {
+        const mpStatus = searchData.results[0].status;
+        return new Response(JSON.stringify({ status: mpStatus, approved: mpStatus === 'approved' }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      }
+
       return new Response(JSON.stringify({ status: 'not_found', approved: false }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       });

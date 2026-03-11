@@ -41,7 +41,6 @@ Deno.serve(async (req) => {
       payment_methods: {
         excluded_payment_types: [],
         installments: 1,
-        default_payment_method_id: 'pix',
       },
       back_urls: {
         success: `${req.headers.get('origin') || 'https://localhost'}/quiz/payment-callback?status=approved&session_id=${session_id}&quiz_id=${quiz_id}`,
