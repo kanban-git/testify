@@ -2,3 +2,6 @@ project_id = "pzdfmqovtwlilmpmvahf"
 
 [functions.mercadopago-checkout]
 verify_jwt = false
+
+[functions.mercadopago-verify]
+verify_jwt = false

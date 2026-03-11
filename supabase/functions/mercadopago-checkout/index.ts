@@ -93,9 +93,16 @@ Deno.serve(async (req) => {
       }),
     });
 
+    // In test/sandbox mode, always prefer sandbox_init_point
+    const isSandbox = !!mpData.sandbox_init_point;
+    const initPoint = isSandbox ? mpData.sandbox_init_point : mpData.init_point;
+
+    console.log(`Payment preference created. Sandbox: ${isSandbox}, ID: ${mpData.id}`);
+
     return new Response(JSON.stringify({
-      init_point: mpData.sandbox_init_point || mpData.init_point,
+      init_point: initPoint,
       preference_id: mpData.id,
+      sandbox: isSandbox,
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
