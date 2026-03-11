@@ -234,52 +234,13 @@ export default function QuizResult() {
               </motion.div>
             </>
           ) : (
-            <>
-              {/* Full report */}
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-4">
-                <div className="flex items-center gap-2 text-success font-medium">
-                  <CheckCircle className="h-5 w-5" /> Relatório completo desbloqueado
-                </div>
-
-                {report?.sections.map((section, i) => (
-                  <motion.div key={i} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.1 }}>
-                    <Card>
-                      <CardHeader><CardTitle className="text-base flex items-center gap-2">
-                        {i === 0 ? <BarChart3 className="h-4 w-4 text-primary" /> : <FileText className="h-4 w-4 text-primary" />}
-                        {section.title}
-                      </CardTitle></CardHeader>
-                      <CardContent>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{section.content}</p>
-                        {section.score !== undefined && section.maxScore && (
-                          <div className="mt-4">
-                            <div className="flex justify-between text-xs text-muted-foreground mb-1">
-                              <span>Pontuação</span>
-                              <span>{section.score}/{section.maxScore}</span>
-                            </div>
-                            <Progress value={(section.score / section.maxScore) * 100} className="h-2" />
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  </motion.div>
-                ))}
-              </motion.div>
-
-              {/* Email capture if not done */}
-              {!emailSubmitted && (
-                <Card>
-                  <CardContent className="pt-6">
-                    <form onSubmit={handleEmailSubmit} className="space-y-3">
-                      <p className="text-sm font-medium">Receba seu relatório por email:</p>
-                      <div className="flex gap-2">
-                        <Input type="email" placeholder="Seu email" value={email} onChange={e => setEmail(e.target.value)} required className="flex-1" />
-                        <Button type="submit"><Mail className="mr-1 h-4 w-4" /> Enviar</Button>
-                      </div>
-                    </form>
-                  </CardContent>
-                </Card>
-              )}
-            </>
+            <UnlockedReport
+              result={result as any}
+              email={email}
+              setEmail={setEmail}
+              emailSubmitted={emailSubmitted}
+              onEmailSubmit={handleEmailSubmit}
+            />
           )}
 
           <DisclaimerBanner variant={isTDAH ? 'strong' : 'default'} />
