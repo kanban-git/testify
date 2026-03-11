@@ -25,7 +25,7 @@ export interface ReportSection {
 // ======================== TRAIT MAPS (question index → trait) ========================
 
 const QUIZ_TRAITS: Record<string, { traits: Record<string, number[]>; profiles: { traits: string[]; name: string; desc: string }[] }> = {
-  'perfil-de-raciocinio': {
+  'teste-de-qi': {
     traits: {
       'Raciocínio analítico': [0, 7, 19],
       'Pensamento estratégico': [4, 2, 17],
