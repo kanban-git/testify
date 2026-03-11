@@ -11,6 +11,7 @@ export interface ScoreResult {
 export interface FullReport {
   sections: ReportSection[];
   disclaimer: string;
+  iqScore?: number;
 }
 
 export interface ReportSection {
