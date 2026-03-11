@@ -128,6 +128,19 @@ export default function QuizResult() {
               <Brain className="h-10 w-10 text-primary-foreground" />
             </motion.div>
 
+            {isIQTest && iqScore ? (
+              <motion.div
+                initial={{ scale: 0.5, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.4, type: 'spring', stiffness: 150 }}
+                className="space-y-2"
+              >
+                <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Seu QI estimado</p>
+                <div className="text-7xl md:text-8xl font-display font-black text-gradient">{iqScore}</div>
+                <p className="text-lg font-semibold text-muted-foreground">{getIQClassification(iqScore)}</p>
+              </motion.div>
+            ) : null}
+
             <div className="space-y-3">
               <p className="text-sm font-semibold text-primary uppercase tracking-[0.2em]">Sua análise está pronta</p>
               <p className="text-base text-muted-foreground">Perfil predominante:</p>
